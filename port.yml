@@ -1,0 +1,15 @@
+- identifier: some_identifier
+  title: Some Title
+  team: []
+  icon: DefaultBlueprint
+  blueprint: githubPullRequest
+  properties:
+    creator: string
+    assignees: []
+    reviewers: []
+    status: merged
+    closedAt: '2024-08-12T15:39:50.996Z'
+    updatedAt: '2024-08-12T15:39:50.996Z'
+    mergedAt: '2024-08-12T15:39:50.996Z'
+    link: https://example.com
+  relations: {}
