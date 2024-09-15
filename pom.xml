@@ -92,5 +92,10 @@
             <version>1</version>
         </dependency>
         -->
+        <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-library</artifactId>
+            <version>2.13.12</version> <!-- or the version required by the project -->
+        </dependency>
     </dependencies>
 </project>

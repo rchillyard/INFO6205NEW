@@ -40,7 +40,9 @@ public class Newton {
         int tries = maxTries;
         for (; tries > 0; tries--)
             try {
+                System.out.println(x);
                 final double y = f.apply(x);
+                System.out.println(y);
                 if (Math.abs(y) < tolerance) return Either.right(x);
                 x = x - y / dfbydx.apply(x);
             } catch (Exception e) {
@@ -52,12 +54,13 @@ public class Newton {
     public static void main(String[] args) {
 
         // Build the Newton's Approximation problem to be solved: cos(x) = x
-        Newton newton = new Newton("cos(x) - x", (double x) -> Math.cos(x) - x, (double x) -> -Math.sin(x) - 1);
+        // Newton newton = new Newton("cos(x) - x", (double x) -> Math.cos(x) - x, (double x) -> -Math.sin(x) - 1);
+        Newton newton = new Newton("x2-4x+1", (double x) -> (Math.pow(x,2) - (4*x) + 1), (double x) -> (2*x) - 4);
 
         // Solve the problem starting with a value of x = 1;
         // requiring a precision of 10^-7;
         // and giving up after 200 tries.
-        Either<String, Double> result = newton.solve(1.0, 200, 1E-7);
+        Either<String, Double> result = newton.solve(5, 200, 1E-7);
 
         // Process the result
         result.apply(
