@@ -78,7 +78,7 @@ public class RandomWalk {
 //        if (args.length == 0)
 //            throw new RuntimeException("Syntax: RandomWalk steps [experiments]");
         int totalRuns = 60;
-        int[] stepValues = new int[] {0, 1, 2, 3, 4,9,16,25,36,49,64,81,100,144,169, 196,225,256,289,324,361, 500,1000, 2000, 5000, 7500, 100000, 500000, 1000000};
+        int[] stepValues = new int[] {0, 1, 2, 3, 4,9,16,25,36,49,64,81,100,144,169, 196,225,256,289,324,361, 500,1000, 2000, 5000, 7500};
         int n = 30;
 //        final Random r = new Random();
         for ( int m:  stepValues) {
@@ -91,12 +91,13 @@ public class RandomWalk {
             double formula = Math.sqrt(m);
             double avgResults = stepTotal / totalRuns;
             double diff = (formula - avgResults);
+            System.out.println("Average of all "+ totalRuns + " Runs is " + avgResults + " for " + m + " steps over " + n + " experiments");
 //            System.out.println(
 //                    "Average of all above "+ totalRuns + " Runs is "
 //                            + avgResults
 //            );
 //             System.out.println(m + "," + avgResults + "," +  formula + "," + diff);
-          System.out.println(m + "," + avgResults);
+        //   System.out.println(m + "," + avgResults);
         }
     }
 
