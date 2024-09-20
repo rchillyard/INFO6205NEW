@@ -20,9 +20,8 @@ public class RandomWalk {
      * @param dy the distance he moves in the y direction
      */
     private void move(int dx, int dy) {
-        // TO BE IMPLEMENTED  do move
-         throw new RuntimeException("Not implemented");
-        // END SOLUTION
+        this.x += dx;
+        this.y += dy;
     }
 
     /**
@@ -31,8 +30,9 @@ public class RandomWalk {
      * @param m the number of steps the drunkard takes
      */
     private void randomWalk(int m) {
-        // TO BE IMPLEMENTED 
-throw new RuntimeException("implementation missing");
+        for (int i = 0; i < m; i++) {
+            randomMove();
+        }
     }
 
     /**
@@ -51,9 +51,10 @@ throw new RuntimeException("implementation missing");
      * @return the (Euclidean) distance from the origin to the current position.
      */
     public double distance() {
-        // TO BE IMPLEMENTED 
-         return 0.0;
-        // END SOLUTION
+        // Since, we start from origin (0,0), omitting the 0 in the equation below
+         return Math.sqrt(
+                 Math.pow(x, 2) + Math.pow(y, 2)
+         );
     }
 
     /**
@@ -74,13 +75,29 @@ throw new RuntimeException("implementation missing");
     }
 
     public static void main(String[] args) {
-        if (args.length == 0)
-            throw new RuntimeException("Syntax: RandomWalk steps [experiments]");
-        int m = Integer.parseInt(args[0]);
+//        if (args.length == 0)
+//            throw new RuntimeException("Syntax: RandomWalk steps [experiments]");
+        int totalRuns = 60;
+        int[] stepValues = new int[] {0, 1, 2, 3, 4,9,16,25,36,49,64,81,100,144,169, 196,225,256,289,324,361, 500,1000, 2000, 5000, 7500, 100000, 500000, 1000000};
         int n = 30;
-        if (args.length > 1) n = Integer.parseInt(args[1]);
-        double meanDistance = randomWalkMulti(m, n);
-        System.out.println(m + " steps: " + meanDistance + " over " + n + " experiments");
+//        final Random r = new Random();
+        for ( int m:  stepValues) {
+            double stepTotal = 0;
+            for (int i = 0; i < totalRuns; i++) {
+                double meanDistance = randomWalkMulti(m, n);
+//                System.out.println(m + " steps: " + meanDistance + " over " + n + " experiments");
+                stepTotal += meanDistance;
+            }
+            double formula = Math.sqrt(m);
+            double avgResults = stepTotal / totalRuns;
+            double diff = (formula - avgResults);
+//            System.out.println(
+//                    "Average of all above "+ totalRuns + " Runs is "
+//                            + avgResults
+//            );
+//             System.out.println(m + "," + avgResults + "," +  formula + "," + diff);
+          System.out.println(m + "," + avgResults);
+        }
     }
 
 }
