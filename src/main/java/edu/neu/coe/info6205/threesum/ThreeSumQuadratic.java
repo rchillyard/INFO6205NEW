@@ -3,6 +3,7 @@ package edu.neu.coe.info6205.threesum;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Arrays;
 
 /**
  * Implementation of ThreeSum which follows the approach of dividing the solution-space into
@@ -25,7 +26,9 @@ public class ThreeSumQuadratic implements ThreeSum {
 
     public Triple[] getTriples() {
         List<Triple> triples = new ArrayList<>();
-        for (int i = 0; i < length; i++) triples.addAll(getTriples(i));
+        for (int i = 0; i < length; i++){
+             triples.addAll(getTriples(i));
+        }
         Collections.sort(triples);
         return triples.stream().distinct().toArray(Triple[]::new);
     }
@@ -39,7 +42,33 @@ public class ThreeSumQuadratic implements ThreeSum {
     public List<Triple> getTriples(int j) {
         List<Triple> triples = new ArrayList<>();
         // TO BE IMPLEMENTED  : for each candidate, test if a[i] + a[j] + a[k] = 0.
-throw new RuntimeException("implementation missing");
+       //int sum =  a[i] + a[k];
+        //int leftPointer = j + 1;
+        int leftPointer = 0;
+        int rightPointer = length - 1;
+        //int sum = a[i] + a[j] + a[k];
+       // while (leftPointer < rightPointer) {
+         while(leftPointer < j && j < rightPointer){
+            int sum = a[leftPointer] + a[j] + a[rightPointer];
+            if (sum == 0){
+                triples.add(new Triple(a[leftPointer], a[j], a[rightPointer]));
+                leftPointer++;
+                rightPointer--;
+            // while (leftPointer < rightPointer && a[leftPointer] == a[leftPointer - 1]) {leftPointer++;};
+            // while (leftPointer < rightPointer && a[rightPointer] == a[rightPointer + 1]) {rightPointer--;};
+            while (leftPointer < j && a[leftPointer] == a[leftPointer - 1]) {leftPointer++;};
+            while (j < rightPointer && a[rightPointer] == a[rightPointer + 1]) {rightPointer--;};
+         }
+            else if (sum < 0){
+                leftPointer++;
+            }else{
+                rightPointer--;
+            }
+        }
+        return triples;
+
+
+//throw new RuntimeException("implementation missing");
     }
 
     private final int[] a;

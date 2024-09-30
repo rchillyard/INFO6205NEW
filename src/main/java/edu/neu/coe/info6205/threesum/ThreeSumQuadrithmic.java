@@ -27,14 +27,19 @@ class ThreeSumQuadrithmic implements ThreeSum {
 
     public Triple[] getTriples() {
         List<Triple> triples = new ArrayList<>();
-        for (int i = 0; i < length; i++)
+        for (int i = 0; i < length; i++){
+            if (i > 0 && a[i] == a[i - 1]) continue;
             for (int j = i + 1; j < length; j++) {
+            if (j > i + 1 && a[j] == a[j - 1]) continue;
                 Triple triple = getTriple(i, j);
                 if (triple != null) triples.add(triple);
             }
         Collections.sort(triples);
+        }
         return triples.stream().distinct().toArray(Triple[]::new);
     }
+
+
 
     public Triple getTriple(int i, int j) {
         int index = Arrays.binarySearch(a, -a[i] - a[j]);
@@ -45,3 +50,6 @@ class ThreeSumQuadrithmic implements ThreeSum {
     private final int[] a;
     private final int length;
 }
+
+
+
