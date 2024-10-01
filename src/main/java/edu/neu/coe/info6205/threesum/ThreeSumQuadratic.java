@@ -26,7 +26,7 @@ public class ThreeSumQuadratic implements ThreeSum {
     public Triple[] getTriples() {
         List<Triple> triples = new ArrayList<>();
         for (int i = 0; i < length; i++) triples.addAll(getTriples(i));
-        Collections.sort(triples);
+//        Collections.sort(triples);
         return triples.stream().distinct().toArray(Triple[]::new);
     }
 
@@ -38,8 +38,20 @@ public class ThreeSumQuadratic implements ThreeSum {
      */
     public List<Triple> getTriples(int j) {
         List<Triple> triples = new ArrayList<>();
-        // TO BE IMPLEMENTED  : for each candidate, test if a[i] + a[j] + a[k] = 0.
-throw new RuntimeException("implementation missing");
+        int i=j-1, k=j+1;
+        while(i >= 0 && k < length) {
+            int s =  a[i] + a[j] + a[k];
+            if(s == 0) {
+                triples.add(new Triple(a[i], a[j], a[k]));
+                i-=1;
+                k+=1;
+            } else if(s > 0) {
+                i-=1;
+            } else {
+                k+=1;
+            }
+        }
+        return triples;
     }
 
     private final int[] a;

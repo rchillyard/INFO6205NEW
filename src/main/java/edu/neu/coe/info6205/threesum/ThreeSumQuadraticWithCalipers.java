@@ -1,9 +1,11 @@
 package edu.neu.coe.info6205.threesum;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
+
 
 /**
  * Implementation of ThreeSum which follows the approach of dividing the solution-space into
@@ -31,7 +33,7 @@ public class ThreeSumQuadraticWithCalipers implements ThreeSum {
      */
     public Triple[] getTriples() {
         List<Triple> triples = new ArrayList<>();
-        Collections.sort(triples); // ???
+        // Collections.sort(triples);
         for (int i = 0; i < length - 2; i++)
             triples.addAll(calipers(a, i, Triple::sum));
         return triples.stream().distinct().toArray(Triple[]::new);
@@ -48,9 +50,22 @@ public class ThreeSumQuadraticWithCalipers implements ThreeSum {
      */
     public static List<Triple> calipers(int[] a, int i, Function<Triple, Integer> function) {
         List<Triple> triples = new ArrayList<>();
-        // TO BE IMPLEMENTED  : use function to qualify triples and to navigate otherwise.
-         return null;
-        // END SOLUTION
+        int j = i+1, k=a.length-1;
+        while(j<k) {
+            Triple t = new Triple(a[i], a[j], a[k]);
+            int result = function.apply(t);
+            if (result == 0) {
+                triples.add(t);
+                j+=1;
+                k-=1;
+            } else if (result < 0 ) {
+                j+=1;
+            } else {
+                k-=1;
+            }
+        }
+
+         return triples;
     }
 
     private final int[] a;
