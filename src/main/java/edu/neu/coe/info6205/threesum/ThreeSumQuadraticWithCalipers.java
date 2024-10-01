@@ -33,7 +33,7 @@ public class ThreeSumQuadraticWithCalipers implements ThreeSum {
      */
     public Triple[] getTriples() {
         List<Triple> triples = new ArrayList<>();
-        Arrays.sort(a);
+        // Collections.sort(triples);
         for (int i = 0; i < length - 2; i++)
             triples.addAll(calipers(a, i, Triple::sum));
         return triples.stream().distinct().toArray(Triple[]::new);
