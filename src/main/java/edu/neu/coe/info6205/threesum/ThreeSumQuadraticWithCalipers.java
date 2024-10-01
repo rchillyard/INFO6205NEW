@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 
+
 /**
  * Implementation of ThreeSum which follows the approach of dividing the solution-space into
  * N sub-spaces where each subspace corresponds to a fixed value for the middle index of the three values.
@@ -48,9 +49,22 @@ public class ThreeSumQuadraticWithCalipers implements ThreeSum {
      */
     public static List<Triple> calipers(int[] a, int i, Function<Triple, Integer> function) {
         List<Triple> triples = new ArrayList<>();
-        // TO BE IMPLEMENTED  : use function to qualify triples and to navigate otherwise.
-         return null;
-        // END SOLUTION
+        int j = i+1, k=a.length-1;
+        while(j<k) {
+            Triple t = new Triple(a[i], a[j], a[k]);
+            int result = function.apply(t);
+            if (result == 0) {
+                triples.add(t);
+                j+=1;
+                k-=1;
+            } else if (result < 0 ) {
+                j+=1;
+            } else {
+                k-=1;
+            }
+        }
+
+         return triples;
     }
 
     private final int[] a;
