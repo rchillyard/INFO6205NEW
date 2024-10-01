@@ -2,6 +2,7 @@ package edu.neu.coe.info6205.threesum;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -37,9 +38,23 @@ public class ThreeSumQuadratic implements ThreeSum {
      * @return a Triple such that
      */
     public List<Triple> getTriples(int j) {
-        List<Triple> triples = new ArrayList<>();
-        // TO BE IMPLEMENTED  : for each candidate, test if a[i] + a[j] + a[k] = 0.
-throw new RuntimeException("implementation missing");
+        HashSet<Triple> triples = new HashSet<>();
+        int i = 0;
+        int k = length - 1;
+        while (i < j && j < k) {
+            int sum = a[i] + a[j] + a[k];
+            if (sum == 0) {
+                triples.add(new Triple(a[i], a[j], a[k]));
+                i++;
+                k--;
+            } else if (sum < 0) {
+                i++;
+            }
+            else {
+                k--;
+            }
+        }
+        return  new ArrayList<>(triples);
     }
 
     private final int[] a;
