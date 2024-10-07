@@ -61,31 +61,28 @@ public class Timer {
      */
     public <T, U> double repeat(int n, boolean warmup, Supplier<T> supplier, Function<T, U> function, UnaryOperator<T> preFunction, Consumer<U> postFunction) {
         pause();
-        if (warmup) {
-            for (int i = 0; i < 10; i++) {
+
+        for(int i = 0; i < n; i++) {
+            if (warmup) {
+                T testapplyValue =  supplier.get();
+                if (preFunction != null) {
+                    testapplyValue = preFunction.apply(testapplyValue);
+                }
+                function.apply(testapplyValue);
+            } else {
                 T applyValue =  supplier.get();
                 if (preFunction != null) {
                     applyValue = preFunction.apply(applyValue);
                 }
+                resume();
                 U result= function.apply(applyValue);
+                lap();
+                pause();
                 if (postFunction != null) {
                     postFunction.accept(result);
                 }
             }
-        }
 
-        for(int i = 0; i < n; i++) {
-            T applyValue =  supplier.get();
-            if (preFunction != null) {
-                applyValue = preFunction.apply(applyValue);
-            }
-            resume();
-            U result= function.apply(applyValue);
-            lap();
-            pause();
-            if (postFunction != null) {
-                postFunction.accept(result);
-            }
         }
         double meanLapTime= meanLapTime();
         resume();
