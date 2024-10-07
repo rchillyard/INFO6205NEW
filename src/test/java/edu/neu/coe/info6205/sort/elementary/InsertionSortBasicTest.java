@@ -39,6 +39,7 @@ public class InsertionSortBasicTest {
         String[] expectedNormal = new String[]{"Dog", "Cat", "Aardvark", "ferret", "Fox", "Bat"};
         InsertionSortBasic<String> sorter = InsertionSortBasic.create();
         sorter.sort(words, 2, 4);
+        System.out.println(words);
         assertArrayEquals(expectedNormal, words);
     }
 }
