@@ -25,7 +25,9 @@ public class InsertionSortBasic<S> {
      * @param to   one more than the highest index of the partition to be sorted.
      */
     public void sort(S[] a, int from, int to) {
-        for (int i = from + 1; i < to; i++) insert(from, i, a);
+        for (int i = from + 1; i < to; i++) {
+            insert(from, i, a);
+        }
     }
 
     public InsertionSortBasic(Comparator<S> comparator) {
@@ -42,6 +44,13 @@ public class InsertionSortBasic<S> {
      */
     private void insert(int from, int i, S[] a) {
         // TO BE IMPLEMENTED  : implement inner loop of insertion sort using comparator
+        S key = a[i];
+        int j = i - 1;
+        while (j>=from && comparator.compare(a[j], key) > 0) {
+            a[j+1] = a[j];
+            j--;
+        }
+        a[j+1] = key;
         // END SOLUTION
     }
 
