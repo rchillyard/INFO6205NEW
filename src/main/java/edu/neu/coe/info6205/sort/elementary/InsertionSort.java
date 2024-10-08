@@ -17,6 +17,7 @@ import edu.neu.coe.info6205.util.Config;
  *
  * @param <X> the underlying Comparable type.
  */
+
 public class InsertionSort<X extends Comparable<X>> extends SortWithComparableHelper<X> {
 
     /**
