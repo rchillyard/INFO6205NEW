@@ -79,9 +79,12 @@ public class Assignment3_Part3 {
     }
    
 
-// conclusion : the more ordered a list is, the less complexity it will take to sort the array. And the bigger size the array becomes, the longer it takes.
-
-
+// conclusions
+//1. Bubble sort has a worst-case when input is in reverse order or when the input is random.
+//2. The best-case time complexity for bubble sort is O(n) when the input is already sorted.
+//3. The more ordered a list is, the less time it takes to sort the array.
+//4. As the size of the array increases, the time it takes to sort the array also increases.
+//5. In terms of order of growth, bubble sort is not efficient for large datasets due to its quadratic time complexity.
 
 
 
