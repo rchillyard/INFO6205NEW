@@ -1,5 +1,10 @@
 package edu.neu.coe.info6205.pq;
 
+import edu.neu.coe.info6205.util.Benchmark_Timer;
+import edu.neu.coe.info6205.util.TimeLogger;
+import edu.neu.coe.info6205.util.Utilities;
+import scala.Int;
+
 import java.util.*;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
@@ -22,7 +27,11 @@ import java.util.function.Consumer;
  * @param <K>
  */
 public class PriorityQueue<K> implements Iterable<K> {
-
+    static String description = "PriorityQueue with BinaryHeap";
+    K topElement;
+    int totalSpils;
+    List<K> spills;
+    boolean show;
     /**
      * Basic constructor that takes the max value, an actual array of elements, and a comparator.
      *
@@ -41,6 +50,11 @@ public class PriorityQueue<K> implements Iterable<K> {
         //noinspection unchecked
         this.binHeap = (K[]) binHeap;
         this.floyd = floyd;
+        this.totalSpils = 0;
+        this.topElement = null;
+        this.show = false;
+        this.spills = new ArrayList<K>();
+
     }
 
     /**
@@ -113,8 +127,18 @@ public class PriorityQueue<K> implements Iterable<K> {
      * @param key the value of the key to give
      */
     public void give(K key) {
-        if (last == binHeap.length - first)
+        if (this.show) {
+            System.out.println("Giving " + key + " from " + first + " to " + last + " with capacity " + binHeap.length);
+        }
+
+        if (last == binHeap.length - first) {
+            if (this.show) {
+                System.out.println("Spilled "+ binHeap[last]);
+            }
+            this.spills.add(binHeap[last]);
             last--; // if we are already at capacity, then we arbitrarily trash the least eligible element
+            this.totalSpils += 1;
+        }
         // (even if it's more eligible than key).
         binHeap[++last + first - 1] = key; // insert the key into the binary heap just after the last element
         swimUp(last + first - 1); // reorder the binary heap
@@ -134,6 +158,21 @@ public class PriorityQueue<K> implements Iterable<K> {
         else return doTake(this::sink);
     }
 
+    public void intTakeOut(Integer x) {
+        K top = null;
+        try {
+            top = this.take();
+            if (this.show) {
+                System.out.println(top);
+            }
+
+
+        } catch (PQException e) {}
+        if (this.topElement == null) {
+            this.topElement = top;
+        }
+    }
+
     K doTake(Consumer<Integer> f) {
         K result = binHeap[first]; // get the root element (the largest or smallest, according to field max)
         swap(first, last-- + first - 1); // swap the root element with the last element
@@ -141,6 +180,7 @@ public class PriorityQueue<K> implements Iterable<K> {
         binHeap[last + first] = null; // prevent loitering
         return result;
     }
+
 
     /**
      * Sink the element at index k down
@@ -229,10 +269,10 @@ public class PriorityQueue<K> implements Iterable<K> {
     }
 
     private final boolean max;
-    private final int first;
+    protected final int first;
     private final Comparator<K> comparator;
     private final K[] binHeap; // binHeap[i] is ith element of binary heap (first element is reserved)
-    private int last; // number of elements in the binary heap
+    protected int last; // number of elements in the binary heap
     private final boolean floyd; //Determine whether floyd's snake method is on or off inside the take method
 
     /**
@@ -252,10 +292,34 @@ public class PriorityQueue<K> implements Iterable<K> {
         doMain();
     }
 
+    public static void runBenchmark(int size, boolean floyd, int insertions, int deletions) {
+        Object[] heap = new Integer[size];
+        PriorityQueue<Integer> pq = new PriorityQueue<Integer>(true, heap, 1, 0, Integer::compare, floyd);
+        Random random = new Random();
+        int i;
+        for (i = 1; i < 4095; i++) {
+            pq.give(random.nextInt());
+        }
+
+
+        String currentDescription = PriorityQueue.description + ", Floyd=" + (floyd ? "True": "False") + ", Size: " + size;
+
+        Benchmark_Timer<Integer> insertionTimer = new Benchmark_Timer<Integer>(currentDescription, null, pq::give, null);
+        double time = insertionTimer.runFromSupplier(() -> random.nextInt(), insertions);
+        System.out.println("" + pq.totalSpils + " spills, Insertions time taken for " + insertions + " runs: " + time*insertions);
+
+        Benchmark_Timer<Integer> removalTimer = new Benchmark_Timer<Integer>(currentDescription, null, pq::intTakeOut, null);
+        time = removalTimer.runFromSupplier(() -> random.nextInt(), deletions);
+        System.out.println("Top element is " + pq.topElement + ". Deletions time taken for " + deletions + " deletions: " + time*deletions);
+    }
+
     /**
      * XXX Huh?
      */
     static void doMain() {
+        int m = 4095;
+        int insertions = 16000;
+        int deletions = 4000;
         String[] s1 = new String[5]; //Created a string type array with size 5
         s1[0] = "A";
         s1[1] = "B";
