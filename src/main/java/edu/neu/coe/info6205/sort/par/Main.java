@@ -21,26 +21,60 @@ public class Main {
         System.out.println("Degree of parallelism: " + ForkJoinPool.getCommonPoolParallelism());
         int cutoff = args.length > 0 ? Integer.parseInt(args[0]) : 1000;
         ParSort.cutoff = cutoff;
+
         Random random = new Random();
-        int[] array = new int[2000000];
+        int[] arraySizes = {500000, 1000000, 2000000, 4000000, 8000000}; // Different array sizes
         ArrayList<Long> timeList = new ArrayList<>();
-        for (int j = 50; j < 100; j++) {
-            ParSort.cutoff = 10000 * (j + 1);
-            // for (int i = 0; i < array.length; i++) array[i] = random.nextInt(10000000);
-            long time;
-            long startTime = System.currentTimeMillis();
-            for (int t = 0; t < 10; t++) {
-                for (int i = 0; i < array.length; i++) array[i] = random.nextInt(10000000);
-                ParSort.sort(array, 0, array.length);
+
+        for (int size : arraySizes) {
+            int[] array = new int[size];
+            System.out.println("Array size: " + size);
+
+            for (int j = 10; j < 200; j += 10) { // Larger cutoff values
+                ParSort.cutoff = 1000 * (j + 1);
+                long totalTime = 0;
+
+                for (int t = 0; t < 10; t++) {
+                    for (int i = 0; i < array.length; i++) array[i] = random.nextInt(10000000);
+                    long startTime = System.currentTimeMillis();
+                    ParSort.sort(array, 0, array.length);
+                    long endTime = System.currentTimeMillis();
+                    totalTime += (endTime - startTime);
+                }
+
+                long avgTime = totalTime / 10;
+                timeList.add(avgTime);
+
+                System.out.println("cutoff: " + ParSort.cutoff + "\t\tAverage Time: " + avgTime + "ms");
             }
-            long endTime = System.currentTimeMillis();
-            time = (endTime - startTime);
-            timeList.add(time);
-
-
-            System.out.println("cutoff：" + (ParSort.cutoff) + "\t\t10times Time:" + time + "ms");
-
         }
+
+        System.out.println("\nAverage times for different cutoffs:");
+        for (int i = 0; i < timeList.size(); i++) {
+            System.out.println("Cutoff: " + (1000 * (10 + (i * 10))) + "\t\tAverage Time: " + timeList.get(i) + "ms");
+        }
+        
+
+        // Random random = new Random();
+        // int[] array = new int[2000000];
+        // ArrayList<Long> timeList = new ArrayList<>();
+        // for (int j = 50; j < 100; j++) {
+        //     ParSort.cutoff = 10000 * (j + 1);
+        //     // for (int i = 0; i < array.length; i++) array[i] = random.nextInt(10000000);
+        //     long time;
+        //     long startTime = System.currentTimeMillis();
+        //     for (int t = 0; t < 10; t++) {
+        //         for (int i = 0; i < array.length; i++) array[i] = random.nextInt(10000000);
+        //         ParSort.sort(array, 0, array.length);
+        //     }
+        //     long endTime = System.currentTimeMillis();
+        //     time = (endTime - startTime);
+        //     timeList.add(time);
+
+
+        //     System.out.println("cutoff：" + (ParSort.cutoff) + "\t\t10times Time:" + time + "ms");
+
+        // }
         try {
             FileOutputStream fis = new FileOutputStream("./src/result.csv");
             OutputStreamWriter isr = new OutputStreamWriter(fis);
