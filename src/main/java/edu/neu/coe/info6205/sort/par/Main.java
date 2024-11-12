@@ -18,11 +18,19 @@ public class Main {
 
     public static void main(String[] args) {
         processArgs(args);
-        System.out.println("Degree of parallelism: " + ForkJoinPool.getCommonPoolParallelism());
+        Integer threads = configuration.get("-N");
+        if (threads == null) {
+            threads = ForkJoinPool.getCommonPoolParallelism();
+        }
+        System.out.println("Common pool: " + ForkJoinPool.getCommonPoolParallelism());
+        System.out.println("Degree of parallelism: " + threads);
+        ForkJoinPool parsortpool = new ForkJoinPool(threads);
+        ParSort.pool = parsortpool;
+
         Random random = new Random();
         int[] array = new int[2000000];
         ArrayList<Long> timeList = new ArrayList<>();
-        for (int j = 50; j < 100; j++) {
+        for (int j = 0; j < 100; j++) {
             ParSort.cutoff = 10000 * (j + 1);
             // for (int i = 0; i < array.length; i++) array[i] = random.nextInt(10000000);
             long time;
@@ -37,7 +45,6 @@ public class Main {
 
 
             System.out.println("cutoff：" + (ParSort.cutoff) + "\t\t10times Time:" + time + "ms");
-
         }
         try {
             FileOutputStream fis = new FileOutputStream("./src/result.csv");
@@ -71,10 +78,10 @@ public class Main {
     }
 
     private static void processCommand(String x, String y) {
-        if (x.equalsIgnoreCase("N")) setConfig(x, Integer.parseInt(y));
+        if (x.equalsIgnoreCase("-N")) setConfig(x, Integer.parseInt(y));
         else
             // TODO sort this out
-            if (x.equalsIgnoreCase("P")) //noinspection ResultOfMethodCallIgnored
+            if (x.equalsIgnoreCase("-P")) //noinspection ResultOfMethodCallIgnored
                 ForkJoinPool.getCommonPoolParallelism();
     }
 
