@@ -19,6 +19,8 @@ public class Main {
     public static void main(String[] args) {
         processArgs(args);
         System.out.println("Degree of parallelism: " + ForkJoinPool.getCommonPoolParallelism());
+        int cutoff = args.length > 0 ? Integer.parseInt(args[0]) : 1000;
+        ParSort.cutoff = cutoff;
         Random random = new Random();
         int[] array = new int[2000000];
         ArrayList<Long> timeList = new ArrayList<>();
