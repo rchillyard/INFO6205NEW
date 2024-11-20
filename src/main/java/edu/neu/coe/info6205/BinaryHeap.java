@@ -2,13 +2,14 @@ package edu.neu.coe.info6205;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.NoSuchElementException;
-public class BinaryHeapFloyd<T> {
+
+public class BinaryHeap<T> {
     private T[] heap;
     private int size;
     private final Comparator<T> comparator;
 
     @SuppressWarnings("unchecked")
-    public BinaryHeapFloyd(int capacity, Comparator<T> comparator) {
+    public BinaryHeap(int capacity, Comparator<T> comparator) {
         this.heap = (T[]) new Object[capacity];
         this.size = 0;
         this.comparator = comparator;
@@ -23,18 +24,6 @@ public class BinaryHeapFloyd<T> {
         heapifyUp(size - 1);
     }
 
-    public T remove() {
-        if (size == 0) {
-            throw new NoSuchElementException();
-        }
-        T result = heap[0];
-        T lastItem = heap[size - 1];
-        heap[0] = lastItem;
-        size--;
-        heapifyDown(0);
-        return result;
-    }
-
     private void heapifyUp(int index) {
         T item = heap[index];
         while (index > 0) {
@@ -47,6 +36,18 @@ public class BinaryHeapFloyd<T> {
             index = parentIndex;
         }
         heap[index] = item;
+    }
+
+    public T remove() {
+        if (size == 0) {
+            throw new NoSuchElementException();
+        }
+        T result = heap[0];
+        T lastItem = heap[size - 1];
+        heap[0] = lastItem;
+        size--;
+        heapifyDown(0);
+        return result;
     }
 
     private void heapifyDown(int index) {
@@ -67,10 +68,5 @@ public class BinaryHeapFloyd<T> {
         heap[index] = item;
     }
 
-    private void swap(int i, int j) {
-        T temp = heap[i];
-        heap[i] = heap[j];
-        heap[j] = temp;
-    }
-
+    
 }
