@@ -1,0 +1,350 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Current File",
+            "request": "launch",
+            "mainClass": "${file}"
+        },
+        {
+            "type": "java",
+            "name": "A_4",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.A_4",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "Assignment3_Part3",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.Assignment3_Part3",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "Assignment_4",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.Assignment_4",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "BinarySearch",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.BinarySearch",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "CallByValue",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.CallByValue",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "Counter",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.Counter",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "HuffmanCoding",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.HuffmanCoding",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "Iteration",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.Iteration",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "Matrix",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.Matrix",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "Mystery",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.Mystery",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "NewtonApproximation",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.NewtonApproximation",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "RecursionAndIteration",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.RecursionAndIteration",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "Ticket",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.Ticket",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "TicketChecker",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.TicketChecker",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "VLA2",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.VLA2",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "DijkstraTwoStack",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.bqs.DijkstraTwoStack",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "MySet",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.bqs.MySet",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "CodeLength",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.codelength.CodeLength",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "CouplingNone",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.coupling.CouplingNone",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "CouplingTight",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.coupling.CouplingTight",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "CoinChange",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.dynamicProgramming.coins.CoinChange",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "Newton",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.functions.Newton",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "Tunnels",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.graphs.tunnels.Tunnels",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "Tunnels_Boruvka",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.graphs.tunnels.Tunnels_Boruvka",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "Tunnels_Kruskal",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.graphs.tunnels.Tunnels_Kruskal",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "Tunnels_Prim",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.graphs.tunnels.Tunnels_Prim",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "Abhishek",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.hr.Abhishek",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "Game",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.life.base.Game",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "MCTS",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.mcts.tictactoe.MCTS",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "TicTacToe",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.mcts.tictactoe.TicTacToe",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "PriorityQueue",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.pq.PriorityQueue",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "RandomWalk",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.randomwalk.RandomWalk",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "RunLength",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.runLengthEncoding.RunLength",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "SelectBenchmark",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.select.SelectBenchmark",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "BubbleSort",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.sort.elementary.BubbleSort",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "ShellSort",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.sort.elementary.ShellSort",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "Solution",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.sort.elementary.Solution",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "MergeSortDecisionTree",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.sort.linearithmic.MergeSortDecisionTree",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "Main",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.sort.par.Main",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "FrequencyCounter",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.symbolTable.hashtable.FrequencyCounter",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "BSTBenchmark",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.symbolTable.tree.BSTBenchmark",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "ThreeSumBenchmark",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.threesum.ThreeSumBenchmark",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "TwoSumBenchmark",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.threesum.TwoSumBenchmark",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "FastInverseSquareRoot",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.util.FastInverseSquareRoot",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "OperationsBenchmark",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.util.OperationsBenchmark",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "PQBenchmark",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.util.PQBenchmark",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "SortBenchmark",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.util.SortBenchmark",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
+            "name": "SymbolTableBenchmark",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.util.SymbolTableBenchmark",
+            "projectName": "INFO6205"
+        }
+    ]
+}
