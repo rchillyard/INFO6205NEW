@@ -6,6 +6,13 @@
     "configurations": [
         {
             "type": "java",
+            "name": "SortBenmarkTest",
+            "request": "launch",
+            "mainClass": "edu.neu.coe.info6205.sort.SortBenmarkTest",
+            "projectName": "INFO6205"
+        },
+        {
+            "type": "java",
             "name": "Current File",
             "request": "launch",
             "mainClass": "${file}"

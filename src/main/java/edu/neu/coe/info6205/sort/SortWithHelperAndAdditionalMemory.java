@@ -12,7 +12,7 @@ import java.util.function.BiFunction;
  *
  * @param <X> underlying type which extends Comparable.
  */
-public abstract class SortWithHelperAndAdditionalMemory<X> extends ClassificationSorter<X, Integer> implements HasAdditionalMemory {
+public abstract class SortWithHelperAndAdditionalMemory<X extends Comparable<X>> extends ClassificationSorter<X, Integer> implements HasAdditionalMemory {
 
     private int arrayMemory = -1;
     private int additionalMemory;

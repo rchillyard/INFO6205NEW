@@ -11,7 +11,6 @@ import edu.neu.coe.info6205.sort.elementary.*;
 import edu.neu.coe.info6205.sort.linearithmic.TimSort;
 import edu.neu.coe.info6205.sort.linearithmic.*;
 import edu.neu.coe.info6205.util.SorterBenchmark;
-import edu.neu.coe.info6205.util.Stopwatch;
 import edu.neu.coe.info6205.util.Config;
 import edu.neu.coe.info6205.util.TimeLogger;
 import edu.neu.coe.info6205.util.LazyLogger;
@@ -49,9 +48,6 @@ import edu.neu.coe.info6205.util.Stopwatch;
 public class SortBenchmark {
     public static final String BENCHMARKSTRINGSORTERS = "benchmarkstringsorters";
 
-   // public static final TimeLogger TIME_LOGGER_RAW = new TimeLogger("Raw time per run {mSec}: ", null);
-    public static final TimeLogger TIME_LOGGER_NLOGN = new TimeLogger("Normalized time per run {n log n}: ", SortBenchmark::minComparisons);
-    public static final TimeLogger TIME_LOGGER_N = new TimeLogger("Normalized time per run {n}: ", n -> n * 1.0);
     public static void main(String[] args) throws IOException {
         Config config = Config.load(SortBenchmark.class);
         logger.info("!!!!!!!!!!!!!!!!!!!! SortBenchmark Start !!!!!!!!!!!!!!!!!!!!\n");
@@ -186,10 +182,14 @@ public class SortBenchmark {
             }
 
         if (isConfigBenchmarkStringSorter("heapsort") && nRunsLinearithmic > 0) {
-//            Helper<String> helper = HelperFactory.create("Heapsort", nWords, config);
-            try (SortWithHelper<String> sorter = new HeapSort<>(nWords, config)) {
+            Helper<String> helper = HelperFactory.create("Heapsort", nWords, config);
+            try (SortWithHelper<String> sorter = new HeapSort<>(helper)) {
                 runStringSortBenchmark(words, nWords, nRunsLinearithmic * 3, sorter, timeLoggersLinearithmic);
             }
+        }
+        if (isConfigBenchmarkStringSorter("heapsort")) {
+            Helper<String> helper = HelperFactory.create("Heapsort", nWords, config);
+            runStringSortBenchmark(words, nWords, nRunsLinearithmic, new HeapSort<>(helper), timeLoggersLinearithmic);
         }
 
         if (isConfigBenchmarkStringSorter("introsort") && nRunsLinearithmic > 0)
@@ -201,7 +201,6 @@ public class SortBenchmark {
             try (SortWithHelper<String> sorter = new RandomSort<>(nWords, config)) {
                 runStringSortBenchmark(words, nWords, nRunsLinearithmic, sorter, timeLoggersLinearithmic);
             }
-        
 
         if (isConfigBenchmarkStringSorter("shellsort")) {
             int nRunsSubQuadratic = estimateRuns(Math.pow(nWords, 4.0 / 3) / 2, totalWork);
@@ -284,46 +283,20 @@ public class SortBenchmark {
 //        doLeipzigBenchmark("zho-simp-tw_web_2014_10K-sentences.txt", 5000, 1000);
     }
 
-    private String randomString(int length) {
-        Random random = new Random();
-        StringBuilder sb = new StringBuilder(length);
-        for (int i = 0; i < length; i++) {
-            sb.append((char) ('a' + random.nextInt(26)));
-        }
-        return sb.toString();
-    }
-
     private void doLeipzigBenchmarkEnglish(long N) {
         if (N > Integer.MAX_VALUE) throw new SortException("number of elements is too large");
         int x = (int) N;
         logger.info("############################### " + x + " words ###############################");
-    
-        // Generate random strings
-        String[] words = new String[x];
-        for (int i = 0; i < x; i++) {
-            words[i] = randomString(10);
-        }
-    
+//        String resource = "eng-uk_web_2002_" + (x < 50000 ? "10K" : x < 200000 ? "100K" : "1M") + "-sentences.txt";
+        String resource = "eng-uk_web_2002_" + (x < 50000 ? "10K" : "100K") + "-sentences.txt";
         try {
-            benchmarkStringSorters(words, x);
+            benchmarkStringSorters(getWords(resource, SortBenchmark::getLeipzigWords), x);
+        } catch (FileNotFoundException e) {
+            logger.warn("Unable to find resource: " + resource + "because:", e);
         } catch (Exception e) {
-            logger.warn("Unable to run benchmark with N: " + N + " because:", e);
+            logger.warn("Unable to run benchmark with N: " + N + "because:", e);
         }
     }
-//     private void doLeipzigBenchmarkEnglish(long N) {
-//         if (N > Integer.MAX_VALUE) throw new SortException("number of elements is too large");
-//         int x = (int) N;
-//         logger.info("############################### " + x + " words ###############################");
-// //        String resource = "eng-uk_web_2002_" + (x < 50000 ? "10K" : x < 200000 ? "100K" : "1M") + "-sentences.txt";
-//         String resource = "eng-uk_web_2002_" + (x < 50000 ? "10K" : "100K") + "-sentences.txt";
-//         try {
-//             benchmarkStringSorters(getWords(resource, SortBenchmark::getLeipzigWords), x);
-//         } catch (FileNotFoundException e) {
-//             logger.warn("Unable to find resource: " + resource + "because:", e);
-//         } catch (Exception e) {
-//             logger.warn("Unable to run benchmark with N: " + N + "because:", e);
-//         }
-//     }
 
     /**
      * Method to run a sorting benchmark, using an explicit preProcessor.

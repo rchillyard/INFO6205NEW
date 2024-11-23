@@ -7,7 +7,7 @@ import edu.neu.coe.info6205.sort.SortWithHelper;
 
 import java.util.function.BiFunction;
 
-public abstract class ClassificationSorter<X, Y> extends SortWithHelper<X> implements Classifier<X, Y> {
+public abstract class ClassificationSorter<X extends Comparable<X>, Y> extends SortWithHelper<X> implements Classifier<X, Y> {
 
     public ClassificationSorter(Helper<X> helper, BiFunction<X, Y, Integer> classifier) {
         super(helper);
