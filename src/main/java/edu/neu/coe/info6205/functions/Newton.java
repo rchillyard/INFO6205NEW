@@ -51,8 +51,8 @@ public class Newton {
 
     public static void main(String[] args) {
 
-        // Build the Newton's Approximation problem to be solved: cos(x) = x
-        Newton newton = new Newton("cos(x) - x", (double x) -> Math.cos(x) - x, (double x) -> -Math.sin(x) - 1);
+        // Build the Newton's Approximation problem to be solved: 3x^4-6
+        Newton newton = new Newton("3x^4-6", (double x) -> 3*x*x*x*x-6, (double x) -> 12 * x * x * x );
 
         // Solve the problem starting with a value of x = 1;
         // requiring a precision of 10^-7;

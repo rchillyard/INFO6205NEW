@@ -23,6 +23,9 @@ import java.util.function.Consumer;
  */
 public class PriorityQueue<K> implements Iterable<K> {
 
+    private K[] heap;
+    private int size;
+
     /**
      * Basic constructor that takes the max value, an actual array of elements, and a comparator.
      *
@@ -273,4 +276,57 @@ public class PriorityQueue<K> implements Iterable<K> {
         PriorityQueue<Integer> PQ_int_floyd = new PriorityQueue<>(max, s2, 1, 5, Comparator.comparing(Integer::intValue), floyd);
         PriorityQueue<Integer> PQ_int_nofloyd = new PriorityQueue<>(max, s2, 1, 5, Comparator.comparing(Integer::intValue), false);
     }
+
+    
+    public void add(K item) {
+        if (size == heap.length) {
+            heap = Arrays.copyOf(heap, size * 2);
+        }
+        heap[size] = item;
+        size++;
+        heapifyUp(size - 1);
+    }
+
+    public K poll() {
+        if (size == 0) {
+            return null;
+        }
+        K item = heap[0];
+        heap[0] = heap[size - 1];
+        size--;
+        heapifyDown(0);
+        return item;
+    }
+
+
+    private void heapifyUp(int index) {
+        while (index > 0) {
+            int parentIndex = (index - 1) / 2;
+            if (comparator.compare(heap[index], heap[parentIndex]) >= 0) {
+                break;
+            }
+            swap(index, parentIndex);
+            index = parentIndex;
+        }
+    }
+
+    private void heapifyDown(int index) {
+        while (index < size / 2) {
+            int leftChild = 2 * index + 1;
+            int rightChild = 2 * index + 2;
+            int smallestChild = leftChild;
+
+            if (rightChild < size && comparator.compare(heap[rightChild], heap[leftChild]) < 0) {
+                smallestChild = rightChild;
+            }
+
+            if (comparator.compare(heap[index], heap[smallestChild]) <= 0) {
+                break;
+            }
+
+            swap(index, smallestChild);
+            index = smallestChild;
+        }
+    }
+
 }

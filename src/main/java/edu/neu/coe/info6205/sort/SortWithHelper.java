@@ -20,7 +20,7 @@ public abstract class SortWithHelper<X> implements ProcessingSort<X> {
         this(HelperFactory.createGeneric(description, comparator, N, nRuns, config));
         closeHelper = true;
     }
-
+    
     /**
      * Get the Helper associated with this Sort.
      * CONSIDER: now that we have made helper protected, let's replace getHelper() with helper in subclasses.

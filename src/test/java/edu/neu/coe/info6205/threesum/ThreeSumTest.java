@@ -2,7 +2,8 @@ package edu.neu.coe.info6205.threesum;
 
 import org.junit.Ignore;
 import org.junit.Test;
-
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
@@ -16,6 +17,7 @@ public class ThreeSumTest {
         int[] ints = new int[]{-2, 0, 2};
         ThreeSumQuadratic target = new ThreeSumQuadratic(ints);
         List<Triple> triples = target.getTriples(1);
+        //System.out.println("Triples: ----" + triples);
         assertEquals(1, triples.size());
     }
 
@@ -159,6 +161,62 @@ public class ThreeSumTest {
         Triple[] triplesQuadratic = target.getTriples();
         Triple[] triplesCubic = new ThreeSumCubic(ints).getTriples();
         assertEquals(triplesCubic.length, triplesQuadratic.length);
+    }
+
+    @Test
+    public void timingTest(){
+        for (int n = 100; n <= 2000; n *= 2){
+            int [] testArray = new int[n];
+            for (int i = 0; i <n ; i++){
+                testArray[i] = ThreadLocalRandom.current().nextInt(-1000, 1000);
+            }
+
+            long startTime = System.nanoTime();
+            ThreeSumCubic cubic = new ThreeSumCubic(testArray);
+            cubic.getTriples();
+            long endTime = System.nanoTime();
+            long duration = endTime - startTime;
+            System.out.println("Time taken for cubic algorithm with n = " + n + " is " + TimeUnit.NANOSECONDS.toMillis(duration) + " milliseconds");
+
+
+        }
+    }
+
+    @Test
+    public void timingTest2(){
+        for (int n = 100; n <= 2000; n *= 2){
+            int [] testArray = new int[n];
+            for (int i = 0; i <n ; i++){
+                testArray[i] = ThreadLocalRandom.current().nextInt(-1000, 1000);
+            }
+
+            long startTime = System.nanoTime();
+            ThreeSumQuadratic quadratic = new ThreeSumQuadratic(testArray);
+            quadratic.getTriples();
+            long endTime = System.nanoTime();
+            long duration = endTime - startTime;
+            System.out.println("Time taken for quadratic algorithm with n = " + n + " is " + TimeUnit.NANOSECONDS.toMillis(duration) + " milliseconds");
+
+        }
+    }
+
+    @Test
+    public void timingTest3(){
+        for (int n = 100; n <= 2000; n *= 2){
+            int [] testArray = new int[n];
+            for (int i = 0; i <n ; i++){
+                testArray[i] = ThreadLocalRandom.current().nextInt(-1000, 1000);
+            }
+
+            long startTime = System.nanoTime();
+            ThreeSumQuadraticWithCalipers calipers = new ThreeSumQuadraticWithCalipers(testArray);
+            calipers.getTriples();
+            long endTime = System.nanoTime();
+            long duration = endTime - startTime;
+            System.out.println("Time taken for calipers algorithm with n = " + n + " is " + TimeUnit.NANOSECONDS.toMillis(duration) + " milliseconds");
+
+
+        }
     }
 
 }

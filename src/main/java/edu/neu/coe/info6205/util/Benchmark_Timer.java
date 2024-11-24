@@ -124,4 +124,18 @@ public class Benchmark_Timer<T> implements Benchmark<T> {
     private final Consumer<T> fPost;
 
     final static LazyLogger logger = new LazyLogger(Benchmark_Timer.class);
+
+    @Override
+    public double run(T t, int n) {
+        if (fPre != null) t = fPre.apply(t);
+        long start = System.nanoTime();
+        for (int i = 0; i < n; i++) {
+            fRun.accept(t);
+        }
+        long end = System.nanoTime();
+        if (fPost != null) fPost.accept(t);
+        return (end - start) / 1e6; // Convert to milliseconds
+    }
+
+    
 }

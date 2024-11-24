@@ -5,11 +5,15 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
+import scala.tools.nsc.doc.html.HtmlTags.U;
+
 /**
  * Class which is able to time the running of functions.
  */
 public class Timer {
-
+    // public void start() {
+    //     running = true;
+    // }
     /**
      * Run the given function n times, once per "lap" and then return the result of calling meanLapTime().
      * The clock will be running when the method is invoked and when it is quit.
@@ -22,6 +26,7 @@ public class Timer {
      * @return the average milliseconds per repetition.
      */
     public <T> double repeat(int n, Supplier<T> function) {
+       // start();
         for (int i = 0; i < n; i++) {
             function.get();
             lap();
@@ -31,6 +36,7 @@ public class Timer {
         resume();
         return result;
     }
+
 
     /**
      * Run the given functions n times, once per "lap" and then return the mean lap time.
@@ -43,6 +49,7 @@ public class Timer {
      * @return the average milliseconds per repetition.
      */
     public <T, U> double repeat(int n, Supplier<T> supplier, Function<T, U> function) {
+      //  start(); 
         return repeat(n, false, supplier, function, null, null);
     }
 
@@ -61,9 +68,29 @@ public class Timer {
      */
     public <T, U> double repeat(int n, boolean warmup, Supplier<T> supplier, Function<T, U> function, UnaryOperator<T> preFunction, Consumer<U> postFunction) {
         // TO BE IMPLEMENTED : note that the timer is running when this method is called and should still be running when it returns.
-         return 0;
-        // END SOLUTION
+
+        long totalTime = 0;
+
+        for (int i = 0; i < n; i++) {
+            T input = supplier.get();
+            if (preFunction != null) {
+                input = preFunction.apply(input);
+            }
+            long startTime = getClock();
+            U result = function.apply(input);
+            long endTime = getClock();
+            totalTime += (endTime - startTime);
+            if (postFunction != null) {
+                postFunction.accept(result);
+            }
+            lap();
+        }
+        pause();
+        return toMillisecs(totalTime) / n;
     }
+
+        // END SOLUTION
+    
 
     /**
      * Stop this Timer and return the mean lap time in milliseconds.
@@ -119,6 +146,11 @@ public class Timer {
     public void lap() {
         if (!running) throw new TimerException();
         laps++;
+        try {
+            Thread.sleep(1); // Sleep for 1 millisecond
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt(); // Restore interrupted status
+        }
     }
 
     /**
@@ -188,7 +220,7 @@ public class Timer {
      */
     private static long getClock() {
         // TO BE IMPLEMENTED 
-         return 0;
+             return System.nanoTime();
         // END SOLUTION
     }
 
@@ -201,7 +233,7 @@ public class Timer {
      */
     private static double toMillisecs(long ticks) {
         // TO BE IMPLEMENTED 
-         return 0;
+         return ticks / 1_000_000.0;
         // END SOLUTION
     }
 

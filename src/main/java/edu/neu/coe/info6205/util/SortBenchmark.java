@@ -10,6 +10,11 @@ import edu.neu.coe.info6205.sort.counting.MSDStringSort;
 import edu.neu.coe.info6205.sort.elementary.*;
 import edu.neu.coe.info6205.sort.linearithmic.TimSort;
 import edu.neu.coe.info6205.sort.linearithmic.*;
+import edu.neu.coe.info6205.util.SorterBenchmark;
+import edu.neu.coe.info6205.util.Config;
+import edu.neu.coe.info6205.util.TimeLogger;
+import edu.neu.coe.info6205.util.LazyLogger;
+import edu.neu.coe.info6205.util.SortBenchmarkHelper;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -27,6 +32,9 @@ import static edu.neu.coe.info6205.sort.linearithmic.MergeSort.MERGESORT;
 import static edu.neu.coe.info6205.util.SortBenchmarkHelper.generateRandomLocalDateTimeArray;
 import static edu.neu.coe.info6205.util.SortBenchmarkHelper.getWords;
 import static edu.neu.coe.info6205.util.Utilities.formatWhole;
+
+import edu.neu.coe.info6205.util.SorterBenchmark;
+import edu.neu.coe.info6205.util.Stopwatch;
 
 /**
  * <p>This class runs a suite of sorting benchmarks.
@@ -174,10 +182,14 @@ public class SortBenchmark {
             }
 
         if (isConfigBenchmarkStringSorter("heapsort") && nRunsLinearithmic > 0) {
-//            Helper<String> helper = HelperFactory.create("Heapsort", nWords, config);
-            try (SortWithHelper<String> sorter = new HeapSort<>(nWords, config)) {
+            Helper<String> helper = HelperFactory.create("Heapsort", nWords, config);
+            try (SortWithHelper<String> sorter = new HeapSort<>(helper)) {
                 runStringSortBenchmark(words, nWords, nRunsLinearithmic * 3, sorter, timeLoggersLinearithmic);
             }
+        }
+        if (isConfigBenchmarkStringSorter("heapsort")) {
+            Helper<String> helper = HelperFactory.create("Heapsort", nWords, config);
+            runStringSortBenchmark(words, nWords, nRunsLinearithmic, new HeapSort<>(helper), timeLoggersLinearithmic);
         }
 
         if (isConfigBenchmarkStringSorter("introsort") && nRunsLinearithmic > 0)

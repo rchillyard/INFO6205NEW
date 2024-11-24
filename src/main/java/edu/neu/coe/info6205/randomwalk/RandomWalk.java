@@ -21,7 +21,9 @@ public class RandomWalk {
      */
     private void move(int dx, int dy) {
         // TO BE IMPLEMENTED  do move
-         throw new RuntimeException("Not implemented");
+        x = x + dx;
+        y = y + dy;
+         //throw new RuntimeException("Not implemented");
         // END SOLUTION
     }
 
@@ -32,7 +34,10 @@ public class RandomWalk {
      */
     private void randomWalk(int m) {
         // TO BE IMPLEMENTED 
-throw new RuntimeException("implementation missing");
+        for (int i = 0; i < m; i++){
+            randomMove();
+        }
+  //throw new RuntimeException("implementation missing");
     }
 
     /**
@@ -40,9 +45,9 @@ throw new RuntimeException("implementation missing");
      * That's to say, moves can be (+-1, 0) or (0, +-1).
      */
     private void randomMove() {
-        boolean ns = random.nextBoolean();
-        int step = random.nextBoolean() ? 1 : -1;
-        move(ns ? step : 0, ns ? 0 : step);
+        boolean ns = random.nextBoolean();  // true if we move north-south or the east-west(false);
+        int step = random.nextBoolean() ? 1 : -1;  //it generates either 1 or -1; and 1 means move in the positive direction and -1 means move in the negative direction;
+        move(ns ? step : 0, ns ? 0 : step); //if ns is true, it moves ns, and calls move(step,0);
     }
 
     /**
@@ -52,7 +57,8 @@ throw new RuntimeException("implementation missing");
      */
     public double distance() {
         // TO BE IMPLEMENTED 
-         return 0.0;
+        return Math.sqrt(x*x + y*y);
+        //return 0.0;
         // END SOLUTION
     }
 
@@ -74,13 +80,15 @@ throw new RuntimeException("implementation missing");
     }
 
     public static void main(String[] args) {
-        if (args.length == 0)
-            throw new RuntimeException("Syntax: RandomWalk steps [experiments]");
-        int m = Integer.parseInt(args[0]);
-        int n = 30;
-        if (args.length > 1) n = Integer.parseInt(args[1]);
-        double meanDistance = randomWalkMulti(m, n);
-        System.out.println(m + " steps: " + meanDistance + " over " + n + " experiments");
+        // if (args.length == 0)
+        //     throw new RuntimeException("Syntax: RandomWalk steps [experiments]");
+        // int m = Integer.parseInt(args[0]);
+        int [] stepValues= {10,20,30,40,50,60};
+        int n = 1000;
+        for (int m : stepValues){
+            double meanDistance = randomWalkMulti(m, n);
+            System.out.println(m + " steps: " + meanDistance + " over " + n + " experiments");
+    }
+        }
     }
 
-}

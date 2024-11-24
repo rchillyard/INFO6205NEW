@@ -64,18 +64,54 @@ public class MergeSort<X extends Comparable<X>> extends SortWithComparableHelper
         sort(a, aux, from, to);
     }
 
-    private void sort(X[] a, X[] aux, int from, int to) {
-        Config config = helper.getConfig();
-        boolean insurance = config.getBoolean(MERGESORT, INSURANCE);
-        boolean noCopy = config.getBoolean(MERGESORT, NOCOPY);
-        if (to <= from + helper.cutoff()) {
-            insertionSort.sort(a, from, to);
-            return;
-        }
+//     private void sort(X[] a, X[] aux, int from, int to) {
+//         Config config = helper.getConfig();
+//         boolean insurance = config.getBoolean(MERGESORT, INSURANCE);
+//         boolean noCopy = config.getBoolean(MERGESORT, NOCOPY);
+//         if (to <= from + helper.cutoff()) {
+//             insertionSort.sort(a, from, to);
+//             return;
+//         }
 
-        // TO BE IMPLEMENTED  : implement merge sort with insurance and no-copy optimizations
-throw new RuntimeException("implementation missing");
+//         // TO BE IMPLEMENTED  : implement merge sort with insurance and no-copy optimizations
+// throw new RuntimeException("implementation missing");
+//     }
+
+private void sort(X[] a, X[] aux, int from, int to) {
+    Config config = helper.getConfig();
+    boolean insurance = config.getBoolean(MERGESORT, INSURANCE);
+    boolean noCopy = config.getBoolean(MERGESORT, NOCOPY);
+
+    // Check if the array is already sorted (insurance optimization)
+    if (insurance && isSorted(a, from, to)) {
+        return;
     }
+
+    // Use insertion sort for small subarrays
+    if (to <= from + helper.cutoff()) {
+        insertionSort.sort(a, from, to);
+        return;
+    }
+
+    int mid = from + (to - from) / 2;
+
+    // Recursively sort both halves
+    sort(aux, a, from, mid);
+    sort(aux, a, mid, to);
+
+    // Merge the sorted halves
+    merge(a, aux, from, mid, to);
+}
+
+
+private boolean isSorted(X[] a, int from, int to) {
+    for (int i = from + 1; i < to; i++) {
+        if (helper.less(a[i], a[i - 1])) {
+            return false;
+        }
+    }
+    return true;
+}
 
     // CONSIDER combine with MergeSortBasic, perhaps.
     private void merge(X[] sorted, X[] result, int from, int mid, int to) {
@@ -100,6 +136,7 @@ throw new RuntimeException("implementation missing");
             }
         }
     }
+    
 
     public static final String MERGESORT = "mergesort";
     public static final String NOCOPY = "nocopy";
