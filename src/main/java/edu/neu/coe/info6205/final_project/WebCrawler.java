@@ -77,8 +77,8 @@ public class WebCrawler {
                     continue;
                 }
                 //原本的 heuristic
-                int depth = ORG_EDU_REGEX.matcher(url).matches() ? 1 : 2; // if the URL is an .org or .edu domain, set the depth to 1, otherwise set it to 2
-                //int depth = 1;
+                //int depth = ORG_EDU_REGEX.matcher(url).matches() ? 1 : 2; // if the URL is an .org or .edu domain, set the depth to 1, otherwise set it to 2
+                int depth = 1;
                 queue.add(new UrlDepthPair(url, depth)); // add the URL and its depth to the queue
                 saveLinkToGraph(startUrl, url); // connect the start URL to the new URL in the graph
                 System.out.println("Added to queue: " + url + " (depth: " + depth + ")");
@@ -107,8 +107,8 @@ public class WebCrawler {
                     continue;
                 }
                 //原本的 heuristic
-                int newDepth = ORG_EDU_REGEX.matcher(url).matches() ? current.depth + 1 : current.depth + 2;
-                //int newDepth = current.depth + 1;
+                //int newDepth = ORG_EDU_REGEX.matcher(url).matches() ? current.depth + 1 : current.depth + 2;
+                int newDepth = current.depth + 1;
                 if (newDepth <= MAX_DEPTH) {
                     queue.add(new UrlDepthPair(url, newDepth)); 
                     saveLinkToGraph(current.url, url);
@@ -191,7 +191,7 @@ public class WebCrawler {
 
     private void clearDatabase() {
         try (Session session = neo4jDriver.session()) {
-            // This Cypher query deletes all nodes and their relationships
+            
             session.executeWrite(tx -> {
                 tx.run("MATCH (n) DETACH DELETE n");
                 System.out.println("Cleared all nodes and relationships in the database.");
