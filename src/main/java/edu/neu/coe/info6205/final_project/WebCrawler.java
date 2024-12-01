@@ -30,6 +30,9 @@ public class WebCrawler {
     }
 
     public void crawl(String startUrl) {
+
+        clearDatabase();
+
         processInitialUrl(startUrl);
 
         ExecutorService executor = Executors.newFixedThreadPool(10); // create a thread pool with 10 threads
@@ -65,7 +68,7 @@ public class WebCrawler {
                                 .ignoreContentType(true)
                                 .get(); // make the HTTP request and get the HTML content
             Elements links = doc.select("a[href]");
-            saveUrlToGraph(startUrl);
+            saveUrlToGraph(startUrl,0);
             visited.add(startUrl); // mark the URL as visited so we don't process it again
     
             for (Element link : links) {
@@ -73,8 +76,9 @@ public class WebCrawler {
                 if (url.isEmpty() || visited.contains(url) || isJavascriptLink(url)) { // skip empty URLs, visited URLs, and JavaScript links
                     continue;
                 }
-    
-                int depth = ORG_EDU_REGEX.matcher(url).matches() ? 1 : 2; // if the URL is an .org or .edu domain, set the depth to 1, otherwise set it to 2
+                //原本的 heuristic
+                //int depth = ORG_EDU_REGEX.matcher(url).matches() ? 1 : 2; // if the URL is an .org or .edu domain, set the depth to 1, otherwise set it to 2
+                int depth = 1;
                 queue.add(new UrlDepthPair(url, depth)); // add the URL and its depth to the queue
                 saveLinkToGraph(startUrl, url); // connect the start URL to the new URL in the graph
                 System.out.println("Added to queue: " + url + " (depth: " + depth + ")");
@@ -83,6 +87,8 @@ public class WebCrawler {
             logger.error("Failed to crawl initial URL: " + startUrl, e);
         }
     }
+
+    
 
     private void processUrl(UrlDepthPair current) {
         try {
@@ -100,11 +106,13 @@ public class WebCrawler {
                 if (url.isEmpty() || visited.contains(url) || isJavascriptLink(url)) {
                     continue;
                 }
-    
-                int newDepth = ORG_EDU_REGEX.matcher(url).matches() ? current.depth + 1 : current.depth + 2;
+                //原本的 heuristic
+                //int newDepth = ORG_EDU_REGEX.matcher(url).matches() ? current.depth + 1 : current.depth + 2;
+                int newDepth = current.depth + 1;
                 if (newDepth <= MAX_DEPTH) {
                     queue.add(new UrlDepthPair(url, newDepth)); 
                     saveLinkToGraph(current.url, url);
+                    saveUrlToGraph(url,newDepth);
                     System.out.println("Added to queue: " + url + " (depth: " + newDepth + ")");
                 }
             }
@@ -131,11 +139,28 @@ public class WebCrawler {
         return url.startsWith("javascript:");
     }
 
-    private void saveUrlToGraph(String url) {
+    //不存depth
+    // private void saveUrlToGraph(String url) {
+    //     try (Session session = neo4jDriver.session()) {
+    //         session.executeWrite(tx -> {
+    //             tx.run("MERGE (n:Page {url: $url})", Map.of("url", url));
+    //             System.out.println("Saved URL to graph: " + url);
+    //             return null;
+    //         });
+    //     }
+    // }
+
+
+    //存depth
+    private void saveUrlToGraph(String url, int depth) {
         try (Session session = neo4jDriver.session()) {
             session.executeWrite(tx -> {
-                tx.run("MERGE (n:Page {url: $url})", Map.of("url", url));
-                System.out.println("Saved URL to graph: " + url);
+                // MERGE ensures the node is created or matched, and ON MATCH ensures depth is updated
+                tx.run("MERGE (n:Page {url: $url}) " +
+                       "ON MATCH SET n.depth = $depth " +  // Update depth if the node already exists
+                       "ON CREATE SET n.depth = $depth",  // Set depth when the node is first created
+                       Map.of("url", url, "depth", depth));
+                System.out.println("Saved URL to graph: " + url + " with depth: " + depth);
                 return null;
             });
         }
@@ -161,6 +186,17 @@ public class WebCrawler {
         UrlDepthPair(String url, int depth) {
             this.url = url;
             this.depth = depth;
+        }
+    }
+
+    private void clearDatabase() {
+        try (Session session = neo4jDriver.session()) {
+            
+            session.executeWrite(tx -> {
+                tx.run("MATCH (n) DETACH DELETE n");
+                System.out.println("Cleared all nodes and relationships in the database.");
+                return null;
+            });
         }
     }
 
