@@ -32,56 +32,56 @@ public class WebCrawler {
 
     public void crawl(String startUrl) {
 
-    clearDatabase();
+        clearDatabase();
 
-    processInitialUrl(startUrl);
+        processInitialUrl(startUrl);
 
-    ExecutorService executor = Executors.newFixedThreadPool(10); // create a thread pool with 10 threads
-    AtomicInteger activeTasks = new AtomicInteger(0);
+        ExecutorService executor = Executors.newFixedThreadPool(10); // create a thread pool with 10 threads
+        AtomicInteger activeTasks = new AtomicInteger(0);
 
-    while (true) {
-        UrlDepthPair current = queue.poll();
+        while (true) {
+            UrlDepthPair current = queue.poll();
 
-        if (current == null) {
-            // If the queue is empty, check if there are active tasks
-            if (activeTasks.get() == 0) {
-                // No active tasks; safe to exit
-                break;
-            } else {
-                // Wait for a short period before checking again
-                try {
-                    Thread.sleep(500);
-                } catch (InterruptedException e) {
-                    logger.error("Interrupted while waiting", e);
+            if (current == null) {
+                // If the queue is empty, check if there are active tasks
+                if (activeTasks.get() == 0) {
+                    // No active tasks; safe to exit
+                    break;
+                } else {
+                    // Wait for a short period before checking again
+                    try {
+                        Thread.sleep(500);
+                    } catch (InterruptedException e) {
+                        logger.error("Interrupted while waiting", e);
+                    }
+                    continue;
                 }
+            }
+
+            if (current.depth > MAX_DEPTH || visited.contains(current.url)) {
                 continue;
             }
+
+            visited.add(current.url);
+            activeTasks.incrementAndGet(); // Increment active task count
+            executor.submit(() -> {
+                try {
+                    processUrl(current);
+                } finally {
+                    activeTasks.decrementAndGet(); // Decrement active task count when done
+                }
+            });
         }
 
-        if (current.depth > MAX_DEPTH || visited.contains(current.url)) {
-            continue;
+        executor.shutdown();
+        try {
+            executor.awaitTermination(1, TimeUnit.HOURS);
+        } catch (InterruptedException e) {
+            logger.error("Executor interrupted", e);
         }
 
-        visited.add(current.url);
-        activeTasks.incrementAndGet(); // Increment active task count
-        executor.submit(() -> {
-            try {
-                processUrl(current);
-            } finally {
-                activeTasks.decrementAndGet(); // Decrement active task count when done
-            }
-        });
+        neo4jDriver.close();
     }
-
-    executor.shutdown();
-    try {
-        executor.awaitTermination(1, TimeUnit.HOURS);
-    } catch (InterruptedException e) {
-        logger.error("Executor interrupted", e);
-    }
-
-    neo4jDriver.close();
-}
 
     private void processInitialUrl(String startUrl) {
         try {
