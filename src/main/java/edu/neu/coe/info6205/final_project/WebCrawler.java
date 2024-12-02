@@ -14,10 +14,11 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
 public class WebCrawler {
-    private static final int MAX_DEPTH = 5;
+    private static final int MAX_DEPTH = 4;
     private static final Pattern ORG_EDU_REGEX = Pattern.compile(".*(\\.org|\\.edu).*");
     private static final Logger logger = LogManager.getLogger(WebCrawler.class);
 
@@ -36,18 +37,39 @@ public class WebCrawler {
         processInitialUrl(startUrl);
 
         ExecutorService executor = Executors.newFixedThreadPool(10); // create a thread pool with 10 threads
+        AtomicInteger activeTasks = new AtomicInteger(0);
 
-        while (!queue.isEmpty()) {
+        while (true) {
             UrlDepthPair current = queue.poll();
 
-            if (current == null || current.depth > MAX_DEPTH || visited.contains(current.url)) {
+            if (current == null) {
+                // If the queue is empty, check if there are active tasks
+                if (activeTasks.get() == 0) {
+                    // No active tasks; safe to exit
+                    break;
+                } else {
+                    // Wait for a short period before checking again
+                    try {
+                        Thread.sleep(500);
+                    } catch (InterruptedException e) {
+                        logger.error("Interrupted while waiting", e);
+                    }
+                    continue;
+                }
+            }
+
+            if (current.depth > MAX_DEPTH || visited.contains(current.url)) {
                 continue;
             }
 
             visited.add(current.url);
-            CompletableFuture.runAsync(() -> processUrl(current), executor).exceptionally(ex -> { // process the URL asynchronously
-                logger.error("Error processing URL: " + current.url, ex);
-                return null;
+            activeTasks.incrementAndGet(); // Increment active task count
+            executor.submit(() -> {
+                try {
+                    processUrl(current);
+                } finally {
+                    activeTasks.decrementAndGet(); // Decrement active task count when done
+                }
             });
         }
 
@@ -97,7 +119,7 @@ public class WebCrawler {
                                 .ignoreContentType(true)
                                 .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
                                 .referrer("http://www.google.com")
-                                .timeout(10000)
+                                .timeout(30000)
                                 .get();
             Elements links = doc.select("a[href]");
     
@@ -116,7 +138,7 @@ public class WebCrawler {
                     System.out.println("Added to queue: " + url + " (depth: " + newDepth + ")");
                 }
             }
-            Thread.sleep(1000);
+            Thread.sleep(2000);
         } catch (IOException e) {
             if (e instanceof org.jsoup.HttpStatusException) {
                 org.jsoup.HttpStatusException httpError = (org.jsoup.HttpStatusException) e;
