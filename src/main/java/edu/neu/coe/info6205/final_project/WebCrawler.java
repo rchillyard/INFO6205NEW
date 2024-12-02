@@ -21,6 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class WebCrawler implements AutoCloseable {
     private static final int MAX_DEPTH = 3;
+
     private static final Logger logger = LogManager.getLogger(WebCrawler.class);
 
     // 优先级队列，基于 heuristic 排序
@@ -82,7 +83,8 @@ public class WebCrawler implements AutoCloseable {
             logger.error("Executor interrupted", e);
         }
 
-        listUrlsByInDegree(); // 调用方法按入度列出所有 URL
+        listUrlsByInDegree();
+        neo4jDriver.close();
     }
 
     private void processInitialUrl(String startUrl) {
@@ -192,13 +194,46 @@ public class WebCrawler implements AutoCloseable {
                         "ON CREATE SET n.depth = $depth, n.in_degree = coalesce(n.in_degree, 0) " +
                         "ON MATCH SET n.depth = CASE WHEN n.depth > $depth THEN $depth ELSE n.depth END", // 更新 depth 为更小的值
                         Map.of("url", url, "depth", depth));
+              
                 System.out.println("Saved URL to graph: " + url + " with depth: " + depth);
                 return null;
             });
         }
     }
 
+    // private void saveUrlToGraph(String url, int depth) {
+    //     try (Session session = neo4jDriver.session()) {
+    //         session.executeWrite(tx -> {
+    //             tx.run("MERGE (n:Page {url: $url}) " +
+    //                             "ON MATCH SET n.depth = $depth " +
+    //                             "ON CREATE SET n.depth = $depth",
+    //                     Map.of("url", url, "depth", depth));
+    //             System.out.println("Saved URL to graph: " + url + " with depth: " + depth);
+    //             return null;
+    //         });
+    //     }
+    // }
+
     private void saveLinkToGraph(String fromUrl, String toUrl) {
+    try (Session session = neo4jDriver.session()) {
+        session.executeWrite(tx -> {
+            // Create the relationship between fromUrl and toUrl
+            tx.run("MERGE (a:Page {url: $fromUrl}) " +
+                   "MERGE (b:Page {url: $toUrl}) " +
+                   "MERGE (a)-[:LINKS_TO]->(b)",
+                   Map.of("fromUrl", fromUrl, "toUrl", toUrl));
+
+            // Increment in_degree for the target node (toUrl)
+            tx.run("MATCH (b:Page {url: $toUrl}) " +
+                   "SET b.in_degree = COALESCE(b.in_degree, 0) + 1",
+                   Map.of("toUrl", toUrl));
+
+            return null;
+        });
+    }
+}
+
+    private void listUrlsByInDegree() {
         try (Session session = neo4jDriver.session()) {
             session.executeWrite(tx -> {
                 tx.run("MERGE (a:Page {url: $fromUrl}) " +
@@ -206,10 +241,12 @@ public class WebCrawler implements AutoCloseable {
                         "MERGE (a)-[:LINKS_TO]->(b) " +
                         "SET b.in_degree = coalesce(b.in_degree, 0) + 1", // 增加 b 的 in_degree
                         Map.of("fromUrl", fromUrl, "toUrl", toUrl));
+
                 return null;
             });
         }
     }
+
 
     private void listUrlsByInDegree() {
         try (Session session = neo4jDriver.session()) {
@@ -230,6 +267,19 @@ public class WebCrawler implements AutoCloseable {
             });
         }
     }
+
+    // private void saveLinkToGraph(String fromUrl, String toUrl) {
+    //     try (Session session = neo4jDriver.session()) {
+    //         session.executeWrite(tx -> {
+    //             tx.run("MERGE (a:Page {url: $fromUrl}) " +
+    //                             "MERGE (b:Page {url: $toUrl}) " +
+    //                             "MERGE (a)-[:LINKS_TO]->(b)",
+    //                     Map.of("fromUrl", fromUrl, "toUrl", toUrl));
+    //             return null;
+    //         });
+    //     }
+    // }
+
 
     private static class UrlDepthPair {
         String url;

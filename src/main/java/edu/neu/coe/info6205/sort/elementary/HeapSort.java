@@ -2,11 +2,17 @@ package edu.neu.coe.info6205.sort.elementary;
 
 import edu.neu.coe.info6205.sort.Helper;
 import edu.neu.coe.info6205.sort.SortWithComparableHelper;
+import edu.neu.coe.info6205.util.Config;
 
 public class HeapSort<X extends Comparable<X>> extends SortWithComparableHelper<X> {
+    public static final String DESCRIPTION = "Heap Sort";
 
     public HeapSort(Helper<X> helper) {
         super(helper);
+    }
+
+    public HeapSort(int nWords, Config config) {
+        super(DESCRIPTION, nWords, 1, config);
     }
 
     public void sort(X[] array, int from, int to) {
