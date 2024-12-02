@@ -17,7 +17,9 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class WebCrawler {
-    private static final int MAX_DEPTH = 4;
+
+    private static final int MAX_DEPTH = 3;
+
     private static final Logger logger = LogManager.getLogger(WebCrawler.class);
 
     // 優先級隊列，基於 heuristic 排序
@@ -78,7 +80,7 @@ public class WebCrawler {
         } catch (InterruptedException e) {
             logger.error("Executor interrupted", e);
         }
-
+        listUrlsByInDegree();
         neo4jDriver.close();
     }
 
@@ -159,26 +161,82 @@ public class WebCrawler {
         try (Session session = neo4jDriver.session()) {
             session.executeWrite(tx -> {
                 tx.run("MERGE (n:Page {url: $url}) " +
-                                "ON MATCH SET n.depth = $depth " +
-                                "ON CREATE SET n.depth = $depth",
-                        Map.of("url", url, "depth", depth));
+
+                       "ON CREATE SET n.depth = $depth, n.in_degree = 0 " +  // Set initial in_degree as 0
+                       "ON MATCH SET n.depth = $depth",
+                       Map.of("url", url, "depth", depth));
+
                 System.out.println("Saved URL to graph: " + url + " with depth: " + depth);
                 return null;
             });
         }
     }
 
+    // private void saveUrlToGraph(String url, int depth) {
+    //     try (Session session = neo4jDriver.session()) {
+    //         session.executeWrite(tx -> {
+    //             tx.run("MERGE (n:Page {url: $url}) " +
+    //                             "ON MATCH SET n.depth = $depth " +
+    //                             "ON CREATE SET n.depth = $depth",
+    //                     Map.of("url", url, "depth", depth));
+    //             System.out.println("Saved URL to graph: " + url + " with depth: " + depth);
+    //             return null;
+    //         });
+    //     }
+    // }
+
     private void saveLinkToGraph(String fromUrl, String toUrl) {
+    try (Session session = neo4jDriver.session()) {
+        session.executeWrite(tx -> {
+            // Create the relationship between fromUrl and toUrl
+            tx.run("MERGE (a:Page {url: $fromUrl}) " +
+                   "MERGE (b:Page {url: $toUrl}) " +
+                   "MERGE (a)-[:LINKS_TO]->(b)",
+                   Map.of("fromUrl", fromUrl, "toUrl", toUrl));
+
+            // Increment in_degree for the target node (toUrl)
+            tx.run("MATCH (b:Page {url: $toUrl}) " +
+                   "SET b.in_degree = COALESCE(b.in_degree, 0) + 1",
+                   Map.of("toUrl", toUrl));
+
+            return null;
+        });
+    }
+}
+
+    private void listUrlsByInDegree() {
         try (Session session = neo4jDriver.session()) {
-            session.executeWrite(tx -> {
-                tx.run("MERGE (a:Page {url: $fromUrl}) " +
-                                "MERGE (b:Page {url: $toUrl}) " +
-                                "MERGE (a)-[:LINKS_TO]->(b)",
-                        Map.of("fromUrl", fromUrl, "toUrl", toUrl));
+
+            session.executeRead(tx -> {
+                // Query to list URLs by in-degree
+                String query = "MATCH (p:Page) " +
+                               "RETURN p.url AS url, coalesce(p.in_degree, 0) AS in_degree " +
+                               "ORDER BY in_degree DESC";
+                var result = tx.run(query);
+                while (result.hasNext()) {
+                    var record = result.next();
+                    String url = record.get("url").asString();
+                    int inDegree = record.get("in_degree").asInt();
+                    System.out.println("URL: " + url + " | In-degree: " + inDegree);
+                }
+
+
                 return null;
             });
         }
     }
+
+    // private void saveLinkToGraph(String fromUrl, String toUrl) {
+    //     try (Session session = neo4jDriver.session()) {
+    //         session.executeWrite(tx -> {
+    //             tx.run("MERGE (a:Page {url: $fromUrl}) " +
+    //                             "MERGE (b:Page {url: $toUrl}) " +
+    //                             "MERGE (a)-[:LINKS_TO]->(b)",
+    //                     Map.of("fromUrl", fromUrl, "toUrl", toUrl));
+    //             return null;
+    //         });
+    //     }
+    // }
 
     private static class UrlDepthPair {
         String url;
