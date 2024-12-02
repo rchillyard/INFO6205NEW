@@ -15,14 +15,13 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.regex.Pattern;
 
 public class WebCrawler {
     private static final int MAX_DEPTH = 4;
-    private static final Pattern ORG_EDU_REGEX = Pattern.compile(".*(\\.org|\\.edu).*");
     private static final Logger logger = LogManager.getLogger(WebCrawler.class);
 
-    private final PriorityBlockingQueue<UrlDepthPair> queue = new PriorityBlockingQueue<>(100, Comparator.comparingInt(o -> o.depth));
+    // 優先級隊列，基於 heuristic 排序
+    private final PriorityBlockingQueue<UrlDepthPair> queue = new PriorityBlockingQueue<>(100, Comparator.comparingInt(o -> o.priority));
     private final Set<String> visited = ConcurrentHashMap.newKeySet();
     private final Driver neo4jDriver;
 
@@ -87,73 +86,68 @@ public class WebCrawler {
         try {
             System.out.println("Crawling initial URL: " + startUrl);
             Document doc = Jsoup.connect(startUrl)
-                                .ignoreContentType(true)
-                                .get(); // make the HTTP request and get the HTML content
+                    .ignoreContentType(true)
+                    .get(); // make the HTTP request and get the HTML content
             Elements links = doc.select("a[href]");
-            saveUrlToGraph(startUrl,0);
+            saveUrlToGraph(startUrl, 0);
             visited.add(startUrl); // mark the URL as visited so we don't process it again
-    
+
             for (Element link : links) {
                 String url = link.absUrl("href");
                 if (url.isEmpty() || visited.contains(url) || isJavascriptLink(url)) { // skip empty URLs, visited URLs, and JavaScript links
                     continue;
                 }
-                //原本的 heuristic
-                //int depth = ORG_EDU_REGEX.matcher(url).matches() ? 1 : 2; // if the URL is an .org or .edu domain, set the depth to 1, otherwise set it to 2
-                int depth = 1;
-                queue.add(new UrlDepthPair(url, depth)); // add the URL and its depth to the queue
-                saveLinkToGraph(startUrl, url); // connect the start URL to the new URL in the graph
-                System.out.println("Added to queue: " + url + " (depth: " + depth + ")");
+                int priority = calculatePriority(url);
+                queue.add(new UrlDepthPair(url, 1, priority)); // 初始深度設為1，加入計算的優先級
+                saveLinkToGraph(startUrl, url);
+                System.out.println("Added to queue: " + url + " (priority: " + priority + ")");
             }
         } catch (IOException e) {
             logger.error("Failed to crawl initial URL: " + startUrl, e);
         }
     }
 
-    
-
     private void processUrl(UrlDepthPair current) {
         try {
-            System.out.println("Processing URL: " + current.url + " (depth: " + current.depth + ")");
+            System.out.println("Processing URL: " + current.url + " (depth: " + current.depth + ", priority: " + current.priority + ")");
             Document doc = Jsoup.connect(current.url)
-                                .ignoreContentType(true)
-                                .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
-                                .referrer("http://www.google.com")
-                                .timeout(30000)
-                                .get();
+                    .ignoreContentType(true)
+                    .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+                    .referrer("http://www.google.com")
+                    .timeout(30000)
+                    .get();
             Elements links = doc.select("a[href]");
-    
+
             for (Element link : links) {
                 String url = link.absUrl("href");
                 if (url.isEmpty() || visited.contains(url) || isJavascriptLink(url)) {
                     continue;
                 }
-                //原本的 heuristic
-                //int newDepth = ORG_EDU_REGEX.matcher(url).matches() ? current.depth + 1 : current.depth + 2;
                 int newDepth = current.depth + 1;
                 if (newDepth <= MAX_DEPTH) {
-                    queue.add(new UrlDepthPair(url, newDepth)); 
+                    int priority = calculatePriority(url);
+                    queue.add(new UrlDepthPair(url, newDepth, priority));
                     saveLinkToGraph(current.url, url);
-                    saveUrlToGraph(url,newDepth);
-                    System.out.println("Added to queue: " + url + " (depth: " + newDepth + ")");
+                    saveUrlToGraph(url, newDepth);
+                    System.out.println("Added to queue: " + url + " (depth: " + newDepth + ", priority: " + priority + ")");
                 }
             }
             Thread.sleep(2000);
         } catch (IOException e) {
-            if (e instanceof org.jsoup.HttpStatusException) {
-                org.jsoup.HttpStatusException httpError = (org.jsoup.HttpStatusException) e;
-                int statusCode = httpError.getStatusCode();
-                if (statusCode == 400 || statusCode == 999) {
-                    logger.warn("Access denied or rate limited for URL: " + current.url + " (Status: " + statusCode + ")");
-                } else {
-                    logger.error("HTTP error fetching URL: " + current.url + " (Status: " + statusCode + ")", e);
-                }
-            } else {
-                logger.error("Failed to crawl URL: " + current.url, e);
-            }
+            logger.error("Failed to crawl URL: " + current.url, e);
         } catch (InterruptedException e) {
-            logger.error("Thread interrupted while processing URL: " + current.url, e);
             Thread.currentThread().interrupt();
+        }
+    }
+
+    private int calculatePriority(String url) {
+        // 設定 heuristic：優先抓取 job 相關的內容
+        if (url.contains("job") || url.contains("career")) {
+            return 1; // 優先級最高
+        } else if (url.contains("help") || url.contains("policy")) {
+            return 10; // 次要內容
+        } else {
+            return 5; // 默認優先級
         }
     }
 
@@ -161,27 +155,13 @@ public class WebCrawler {
         return url.startsWith("javascript:");
     }
 
-    //不存depth
-    // private void saveUrlToGraph(String url) {
-    //     try (Session session = neo4jDriver.session()) {
-    //         session.executeWrite(tx -> {
-    //             tx.run("MERGE (n:Page {url: $url})", Map.of("url", url));
-    //             System.out.println("Saved URL to graph: " + url);
-    //             return null;
-    //         });
-    //     }
-    // }
-
-
-    //存depth
     private void saveUrlToGraph(String url, int depth) {
         try (Session session = neo4jDriver.session()) {
             session.executeWrite(tx -> {
-                // MERGE ensures the node is created or matched, and ON MATCH ensures depth is updated
                 tx.run("MERGE (n:Page {url: $url}) " +
-                       "ON MATCH SET n.depth = $depth " +  // Update depth if the node already exists
-                       "ON CREATE SET n.depth = $depth",  // Set depth when the node is first created
-                       Map.of("url", url, "depth", depth));
+                                "ON MATCH SET n.depth = $depth " +
+                                "ON CREATE SET n.depth = $depth",
+                        Map.of("url", url, "depth", depth));
                 System.out.println("Saved URL to graph: " + url + " with depth: " + depth);
                 return null;
             });
@@ -192,10 +172,9 @@ public class WebCrawler {
         try (Session session = neo4jDriver.session()) {
             session.executeWrite(tx -> {
                 tx.run("MERGE (a:Page {url: $fromUrl}) " +
-                       "MERGE (b:Page {url: $toUrl}) " +
-                       "MERGE (a)-[:LINKS_TO]->(b)", 
-                       Map.of("fromUrl", fromUrl, "toUrl", toUrl));
-                System.out.println("Saved link to graph: " + fromUrl + " -> " + toUrl);
+                                "MERGE (b:Page {url: $toUrl}) " +
+                                "MERGE (a)-[:LINKS_TO]->(b)",
+                        Map.of("fromUrl", fromUrl, "toUrl", toUrl));
                 return null;
             });
         }
@@ -204,19 +183,19 @@ public class WebCrawler {
     private static class UrlDepthPair {
         String url;
         int depth;
+        int priority; // 新增優先級屬性
 
-        UrlDepthPair(String url, int depth) {
+        UrlDepthPair(String url, int depth, int priority) {
             this.url = url;
             this.depth = depth;
+            this.priority = priority;
         }
     }
 
     private void clearDatabase() {
         try (Session session = neo4jDriver.session()) {
-            
             session.executeWrite(tx -> {
                 tx.run("MATCH (n) DETACH DELETE n");
-                System.out.println("Cleared all nodes and relationships in the database.");
                 return null;
             });
         }
