@@ -17,7 +17,9 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class WebCrawler {
+
     private static final int MAX_DEPTH = 3;
+
     private static final Logger logger = LogManager.getLogger(WebCrawler.class);
 
     // 優先級隊列，基於 heuristic 排序
@@ -155,14 +157,15 @@ public class WebCrawler {
         return url.startsWith("javascript:");
     }
 
-
     private void saveUrlToGraph(String url, int depth) {
         try (Session session = neo4jDriver.session()) {
             session.executeWrite(tx -> {
                 tx.run("MERGE (n:Page {url: $url}) " +
+
                        "ON CREATE SET n.depth = $depth, n.in_degree = 0 " +  // Set initial in_degree as 0
                        "ON MATCH SET n.depth = $depth",
                        Map.of("url", url, "depth", depth));
+
                 System.out.println("Saved URL to graph: " + url + " with depth: " + depth);
                 return null;
             });
@@ -203,6 +206,7 @@ public class WebCrawler {
 
     private void listUrlsByInDegree() {
         try (Session session = neo4jDriver.session()) {
+
             session.executeRead(tx -> {
                 // Query to list URLs by in-degree
                 String query = "MATCH (p:Page) " +
@@ -215,6 +219,8 @@ public class WebCrawler {
                     int inDegree = record.get("in_degree").asInt();
                     System.out.println("URL: " + url + " | In-degree: " + inDegree);
                 }
+
+
                 return null;
             });
         }
