@@ -4,10 +4,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.neo4j.driver.AuthTokens;
-import org.neo4j.driver.Driver;
-import org.neo4j.driver.GraphDatabase;
-import org.neo4j.driver.Session;
+import org.neo4j.driver.*;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,16 +17,19 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class WebCrawler implements AutoCloseable {
-    private static final int MAX_DEPTH = 3;
+    private final int maxDepth;
+    private final int threadPoolSize;
     private static final Logger logger = LogManager.getLogger(WebCrawler.class);
 
-    // 优先级队列，基于 heuristic 排序
+    // Priority queue sorted based on heuristic (priority)
     private final PriorityBlockingQueue<UrlDepthPair> queue = new PriorityBlockingQueue<>(100, Comparator.comparingInt(o -> o.priority));
     private final Set<String> visited = ConcurrentHashMap.newKeySet();
     private final Driver neo4jDriver;
 
-    public WebCrawler(String neo4jUri, String user, String password) {
+    public WebCrawler(String neo4jUri, String user, String password, int threadPoolSize, int maxDepth) {
         neo4jDriver = GraphDatabase.driver(neo4jUri, AuthTokens.basic(user, password));
+        this.threadPoolSize = threadPoolSize;
+        this.maxDepth = maxDepth;
     }
 
     public void crawl(String startUrl) {
@@ -38,39 +38,40 @@ public class WebCrawler implements AutoCloseable {
 
         processInitialUrl(startUrl);
 
-        ExecutorService executor = Executors.newFixedThreadPool(10); // 创建具有 10 个线程的线程池
+        ExecutorService executor = Executors.newFixedThreadPool(threadPoolSize); // Use the specified thread pool size
         AtomicInteger activeTasks = new AtomicInteger(0);
 
         while (true) {
             UrlDepthPair current = queue.poll();
 
             if (current == null) {
-                // 如果队列为空，检查是否有活跃的任务
+                // If the queue is empty, check for active tasks
                 if (activeTasks.get() == 0) {
-                    // 没有活跃任务，可以安全退出
+                    // No active tasks, safe to exit
                     break;
                 } else {
-                    // 等待一段时间后再次检查
+                    // Wait for a while and check again
                     try {
                         Thread.sleep(500);
                     } catch (InterruptedException e) {
                         logger.error("Interrupted while waiting", e);
+                        Thread.currentThread().interrupt();
                     }
                     continue;
                 }
             }
 
-            if (current.depth > MAX_DEPTH || visited.contains(current.url)) {
+            if (current.depth > maxDepth || visited.contains(current.url)) {
                 continue;
             }
 
             visited.add(current.url);
-            activeTasks.incrementAndGet(); // 增加活跃任务计数
+            activeTasks.incrementAndGet(); // Increase active task count
             executor.submit(() -> {
                 try {
                     processUrl(current);
                 } finally {
-                    activeTasks.decrementAndGet(); // 任务完成后减少活跃任务计数
+                    activeTasks.decrementAndGet(); // Decrease active task count after completion
                 }
             });
         }
@@ -80,35 +81,44 @@ public class WebCrawler implements AutoCloseable {
             executor.awaitTermination(1, TimeUnit.HOURS);
         } catch (InterruptedException e) {
             logger.error("Executor interrupted", e);
+            Thread.currentThread().interrupt();
         }
 
-        listUrlsByInDegree(); // 调用方法按入度列出所有 URL
+        listUrlsByInDegree(); // List all URLs sorted by in-degree
     }
 
     private void processInitialUrl(String startUrl) {
         try {
             String normalizedUrl = normalizeUrl(startUrl);
+            if (normalizedUrl == null) {
+                logger.error("Normalized URL is null: " + startUrl);
+                return;
+            }
             System.out.println("Crawling initial URL: " + normalizedUrl);
             Document doc = Jsoup.connect(normalizedUrl)
                     .ignoreContentType(true)
-                    .get(); // 发起 HTTP 请求并获取 HTML 内容
+                    .get(); // Send HTTP request and fetch HTML content
             Elements links = doc.select("a[href]");
             saveUrlToGraph(normalizedUrl, 0);
-            visited.add(normalizedUrl); // 标记 URL 已访问
+            visited.add(normalizedUrl); // Mark URL as visited
+            logger.info("Saved initial URL to database: " + normalizedUrl);
 
             for (Element link : links) {
                 String url = link.absUrl("href");
+                if (isUnsupportedLink(url)) {
+                    continue;
+                }
                 url = normalizeUrl(url);
-                if (url.isEmpty() || visited.contains(url) || isJavascriptLink(url)) { // 跳过空链接、已访问链接和 JavaScript 链接
+                if (url == null || visited.contains(url)) {
                     continue;
                 }
                 int priority = calculatePriority(url);
-                queue.add(new UrlDepthPair(url, 1, priority)); // 初始深度设为1，加入计算的优先级
-                saveUrlToGraph(url, 1); // 记录深度为 1 的 URL
+                queue.add(new UrlDepthPair(url, 1, priority)); // Set initial depth to 1 and add with calculated priority
+                saveUrlToGraph(url, 1); // Record URL with depth 1
                 saveLinkToGraph(normalizedUrl, url);
                 System.out.println("Added to queue: " + url + " (priority: " + priority + ")");
             }
-        } catch (IOException | URISyntaxException e) {
+        } catch (IOException e) {
             logger.error("Failed to crawl initial URL: " + startUrl, e);
         }
     }
@@ -116,6 +126,9 @@ public class WebCrawler implements AutoCloseable {
     private void processUrl(UrlDepthPair current) {
         try {
             String normalizedUrl = normalizeUrl(current.url);
+            if (normalizedUrl == null) {
+                return;
+            }
             System.out.println("Processing URL: " + normalizedUrl + " (depth: " + current.depth + ", priority: " + current.priority + ")");
             Document doc = Jsoup.connect(normalizedUrl)
                     .ignoreContentType(true)
@@ -127,12 +140,15 @@ public class WebCrawler implements AutoCloseable {
 
             for (Element link : links) {
                 String url = link.absUrl("href");
+                if (isUnsupportedLink(url)) {
+                    continue;
+                }
                 url = normalizeUrl(url);
-                if (url.isEmpty() || visited.contains(url) || isJavascriptLink(url)) {
+                if (url == null || visited.contains(url)) {
                     continue;
                 }
                 int newDepth = current.depth + 1;
-                if (newDepth <= MAX_DEPTH) {
+                if (newDepth <= maxDepth) {
                     int priority = calculatePriority(url);
                     queue.add(new UrlDepthPair(url, newDepth, priority));
                     saveUrlToGraph(url, newDepth);
@@ -141,56 +157,84 @@ public class WebCrawler implements AutoCloseable {
                 }
             }
             Thread.sleep(2000);
-        } catch (IOException | URISyntaxException e) {
+        } catch (IOException e) {
             logger.error("Failed to crawl URL: " + current.url, e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
     }
 
-    private int calculatePriority(String url) {
-        // 设置启发式：优先抓取 edu 和 graduate admission 相关的内容
-        if (url.contains(".edu") && url.toLowerCase().contains("graduate")) {
-            return 1; // 优先级最高
+    public int calculatePriority(String url) {
+        // Set heuristic: prioritize content related to graduate and Boston
+        if (url.contains("graduate") && url.toLowerCase().contains("boston")) {
+            return 1; // Highest priority
         } else if (url.contains("admission") && url.toLowerCase().contains("boston")) {
-            return 2; // 高优先级
+            return 2; // High priority
         } else if (url.contains("help") || url.contains("policy")) {
-            return 10; // 次要内容
+            return 10; // Secondary content
         } else {
-            return 5; // 默认优先级
+            return 5; // Default priority
         }
+    }
+
+    public boolean isUnsupportedLink(String url) {
+        return isJavascriptLink(url) || isImageLink(url) || isInvalidScheme(url);
     }
 
     private boolean isJavascriptLink(String url) {
         return url.startsWith("javascript:");
     }
 
-    // 新增方法：规范化 URL
-    private String normalizeUrl(String url) throws URISyntaxException {
-        URI uri = new URI(url);
-        // 对 URI 进行规范化处理
-        uri = uri.normalize();
-        // 构建规范化的 URI，移除默认端口，处理大小写等
-        String scheme = uri.getScheme() != null ? uri.getScheme().toLowerCase() : "http";
-        String host = uri.getHost() != null ? uri.getHost().toLowerCase() : "";
-        int port = uri.getPort();
-        String path = uri.getPath() != null ? uri.getPath() : "";
-        if (path.endsWith("/")) {
-            path = path.substring(0, path.length() - 1); // 移除末尾的斜杠
-        }
-        String query = uri.getQuery();
-        String fragment = uri.getFragment();
+    // New method: check if the link is an image link
+    public boolean isImageLink(String url) {
+        String lowerUrl = url.toLowerCase();
+        return lowerUrl.endsWith(".png") || lowerUrl.endsWith(".jpg") || lowerUrl.endsWith(".jpeg")
+                || lowerUrl.endsWith(".gif") || lowerUrl.endsWith(".bmp") || lowerUrl.endsWith(".svg")
+                || lowerUrl.endsWith(".webp") || lowerUrl.endsWith(".tiff") || lowerUrl.endsWith(".ico");
+    }
 
-        URI normalizedUri = new URI(scheme, null, host, port, path, query, fragment);
-        return normalizedUri.toString();
+    // New method: check if the scheme is unsupported
+    private boolean isInvalidScheme(String url) {
+        String lowerUrl = url.toLowerCase();
+        return lowerUrl.startsWith("mailto:") || lowerUrl.startsWith("tel:") || lowerUrl.startsWith("sms:")
+                || lowerUrl.startsWith("ftp:") || lowerUrl.startsWith("file:");
+    }
+
+    // Modified method: normalize the URL with exception handling
+    public String normalizeUrl(String url) {
+        try {
+            URI uri = new URI(url);
+            // Normalize the URI
+            uri = uri.normalize();
+            // Construct the normalized URI, remove default ports, handle case sensitivity, etc.
+            String scheme = uri.getScheme() != null ? uri.getScheme().toLowerCase() : "http";
+            if (!scheme.equals("http") && !scheme.equals("https")) {
+                return null; // Handle only http and https protocols
+            }
+            String host = uri.getHost() != null ? uri.getHost().toLowerCase() : "";
+            int port = uri.getPort();
+            String path = uri.getPath() != null ? uri.getPath() : "";
+            // Retain the slash for root paths
+            if (path.endsWith("/") && path.length() > 1) {
+                path = path.substring(0, path.length() - 1); // Remove trailing slash
+            }
+            String query = uri.getQuery();
+            String fragment = uri.getFragment();
+
+            URI normalizedUri = new URI(scheme, null, host, port, path, query, fragment);
+            return normalizedUri.toString();
+        } catch (URISyntaxException e) {
+            // Skip URLs that cannot be parsed
+            return null;
+        }
     }
 
     private void saveUrlToGraph(String url, int depth) {
         try (Session session = neo4jDriver.session()) {
             session.executeWrite(tx -> {
                 tx.run("MERGE (n:Page {url: $url}) " +
-                        "ON CREATE SET n.depth = $depth, n.in_degree = coalesce(n.in_degree, 0) " +
-                        "ON MATCH SET n.depth = CASE WHEN n.depth > $depth THEN $depth ELSE n.depth END", // 更新 depth 为更小的值
+                        "ON CREATE SET n.depth = $depth, n.in_degree = 0 " +
+                        "ON MATCH SET n.depth = CASE WHEN n.depth > $depth THEN $depth ELSE n.depth END",
                         Map.of("url", url, "depth", depth));
                 System.out.println("Saved URL to graph: " + url + " with depth: " + depth);
                 return null;
@@ -204,7 +248,7 @@ public class WebCrawler implements AutoCloseable {
                 tx.run("MERGE (a:Page {url: $fromUrl}) " +
                         "MERGE (b:Page {url: $toUrl}) " +
                         "MERGE (a)-[:LINKS_TO]->(b) " +
-                        "SET b.in_degree = coalesce(b.in_degree, 0) + 1", // 增加 b 的 in_degree
+                        "SET b.in_degree = coalesce(b.in_degree, 0) + 1",
                         Map.of("fromUrl", fromUrl, "toUrl", toUrl));
                 return null;
             });
@@ -214,10 +258,10 @@ public class WebCrawler implements AutoCloseable {
     private void listUrlsByInDegree() {
         try (Session session = neo4jDriver.session()) {
             session.executeRead(tx -> {
-                // 查询按入度列出 URL
+                // Query URLs sorted by in-degree
                 String query = "MATCH (p:Page) " +
-                               "RETURN p.url AS url, p.in_degree AS in_degree " +
-                               "ORDER BY in_degree DESC";
+                        "RETURN p.url AS url, coalesce(p.in_degree, 0) AS in_degree " +
+                        "ORDER BY in_degree DESC";
                 var result = tx.run(query);
                 System.out.println("\nURLs ordered by In-degree:");
                 while (result.hasNext()) {
@@ -234,7 +278,7 @@ public class WebCrawler implements AutoCloseable {
     private static class UrlDepthPair {
         String url;
         int depth;
-        int priority; // 优先级属性
+        int priority; // Priority attribute
 
         UrlDepthPair(String url, int depth, int priority) {
             this.url = url;
@@ -249,6 +293,7 @@ public class WebCrawler implements AutoCloseable {
                 tx.run("MATCH (n) DETACH DELETE n");
                 return null;
             });
+            logger.info("Database cleared successfully.");
         }
     }
 
@@ -265,7 +310,11 @@ public class WebCrawler implements AutoCloseable {
         String startUrl = scanner.nextLine();
         scanner.close();
 
-        try (WebCrawler crawler = new WebCrawler("neo4j+s://ab8b5b9b.databases.neo4j.io", "neo4j", "nwMDNiR--8ipy-ad92tZ3-LPsCZiVn7OTrz8ZTRe9zE")) {
+        // Set default thread pool size and max depth
+        int threadPoolSize = 10;
+        int maxDepth = 3;
+        
+        try (WebCrawler crawler = new WebCrawler("neo4j+s://ab8b5b9b.databases.neo4j.io", "neo4j", "nwMDNiR--8ipy-ad92tZ3-LPsCZiVn7OTrz8ZTRe9zE", threadPoolSize, maxDepth)) {
             crawler.crawl(startUrl);
         }
     }
