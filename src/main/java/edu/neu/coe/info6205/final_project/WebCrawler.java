@@ -85,7 +85,6 @@ public class WebCrawler implements AutoCloseable {
         }
 
         listUrlsByInDegree(); // List all URLs sorted by in-degree
-
     }
 
     private void processInitialUrl(String startUrl) {
@@ -237,46 +236,24 @@ public class WebCrawler implements AutoCloseable {
                         "ON CREATE SET n.depth = $depth, n.in_degree = 0 " +
                         "ON MATCH SET n.depth = CASE WHEN n.depth > $depth THEN $depth ELSE n.depth END",
                         Map.of("url", url, "depth", depth));
-              
                 System.out.println("Saved URL to graph: " + url + " with depth: " + depth);
                 return null;
             });
         }
     }
 
-    // private void saveUrlToGraph(String url, int depth) {
-    //     try (Session session = neo4jDriver.session()) {
-    //         session.executeWrite(tx -> {
-    //             tx.run("MERGE (n:Page {url: $url}) " +
-    //                             "ON MATCH SET n.depth = $depth " +
-    //                             "ON CREATE SET n.depth = $depth",
-    //                     Map.of("url", url, "depth", depth));
-    //             System.out.println("Saved URL to graph: " + url + " with depth: " + depth);
-    //             return null;
-    //         });
-    //     }
-    // }
-
     private void saveLinkToGraph(String fromUrl, String toUrl) {
-    try (Session session = neo4jDriver.session()) {
-        session.executeWrite(tx -> {
-            // Create the relationship between fromUrl and toUrl
-            tx.run("MERGE (a:Page {url: $fromUrl}) " +
-                   "MERGE (b:Page {url: $toUrl}) " +
-                   "MERGE (a)-[:LINKS_TO]->(b)",
-                   Map.of("fromUrl", fromUrl, "toUrl", toUrl));
-
-            // Increment in_degree for the target node (toUrl)
-            tx.run("MATCH (b:Page {url: $toUrl}) " +
-                   "SET b.in_degree = COALESCE(b.in_degree, 0) + 1",
-                   Map.of("toUrl", toUrl));
-
-            return null;
-        });
+        try (Session session = neo4jDriver.session()) {
+            session.executeWrite(tx -> {
+                tx.run("MERGE (a:Page {url: $fromUrl}) " +
+                        "MERGE (b:Page {url: $toUrl}) " +
+                        "MERGE (a)-[:LINKS_TO]->(b) " +
+                        "SET b.in_degree = coalesce(b.in_degree, 0) + 1",
+                        Map.of("fromUrl", fromUrl, "toUrl", toUrl));
+                return null;
+            });
+        }
     }
-}
-
-
 
     private void listUrlsByInDegree() {
         try (Session session = neo4jDriver.session()) {
@@ -297,19 +274,6 @@ public class WebCrawler implements AutoCloseable {
             });
         }
     }
-
-    // private void saveLinkToGraph(String fromUrl, String toUrl) {
-    //     try (Session session = neo4jDriver.session()) {
-    //         session.executeWrite(tx -> {
-    //             tx.run("MERGE (a:Page {url: $fromUrl}) " +
-    //                             "MERGE (b:Page {url: $toUrl}) " +
-    //                             "MERGE (a)-[:LINKS_TO]->(b)",
-    //                     Map.of("fromUrl", fromUrl, "toUrl", toUrl));
-    //             return null;
-    //         });
-    //     }
-    // }
-
 
     private static class UrlDepthPair {
         String url;
