@@ -153,7 +153,7 @@ public class WebCrawler implements AutoCloseable {
                     queue.add(new UrlDepthPair(url, newDepth, priority));
                     saveUrlToGraph(url, newDepth);
                     saveLinkToGraph(normalizedUrl, url);
-                    System.out.println("Added to queue: " + url + " (depth: " + newDepth + ", priority: " + priority + ")");
+                    //System.out.println("Added to queue: " + url + " (depth: " + newDepth + ", priority: " + priority + ")");
                 }
             }
             Thread.sleep(2000);
@@ -178,7 +178,7 @@ public class WebCrawler implements AutoCloseable {
     }
 
     public boolean isUnsupportedLink(String url) {
-        return isJavascriptLink(url) || isImageLink(url) || isInvalidScheme(url);
+        return isJavascriptLink(url) || isImageLink(url) || isInvalidScheme(url) || url.contains("#");
     }
 
     private boolean isJavascriptLink(String url) {
@@ -219,7 +219,7 @@ public class WebCrawler implements AutoCloseable {
                 path = path.substring(0, path.length() - 1); // Remove trailing slash
             }
             String query = uri.getQuery();
-            String fragment = uri.getFragment();
+            String fragment = null; // Exclude the fragment
 
             URI normalizedUri = new URI(scheme, null, host, port, path, query, fragment);
             return normalizedUri.toString();
@@ -236,7 +236,7 @@ public class WebCrawler implements AutoCloseable {
                         "ON CREATE SET n.depth = $depth, n.in_degree = 0 " +
                         "ON MATCH SET n.depth = CASE WHEN n.depth > $depth THEN $depth ELSE n.depth END",
                         Map.of("url", url, "depth", depth));
-                System.out.println("Saved URL to graph: " + url + " with depth: " + depth);
+                //System.out.println("Saved URL to graph: " + url + " with depth: " + depth);
                 return null;
             });
         }
